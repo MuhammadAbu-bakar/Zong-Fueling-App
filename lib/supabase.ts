@@ -21,6 +21,8 @@ export interface Site {
   fuel_capacity: number;
   current_fuel_level: number;
   created_at: string;
+  consumptionPercentage?: number;
+  daysSinceLastFueling?: number;
 }
 
 export interface Ticket {

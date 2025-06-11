@@ -68,47 +68,95 @@ export default function DashboardScreen() {
     }
   };
 
+  const getTicketStats = () => {
+    const pending = tickets.filter(t => t.status === 'pending').length;
+    const approved = tickets.filter(t => t.status === 'approved').length;
+    const rejected = tickets.filter(t => t.status === 'rejected').length;
+    const closed = tickets.filter(t => t.status === 'closed').length;
+    return { pending, approved, rejected, closed };
+  };
+
+  const stats = getTicketStats();
+
   return (
     <ScrollView style={styles.container}>
       <Animatable.View animation="fadeInDown" style={styles.header}>
-        <View>
-          <Text style={styles.greeting}>Welcome back,</Text>
-          <Text style={styles.userName}>{user?.email}</Text>
-          <Text style={styles.userRole}>{user?.role?.toUpperCase()}</Text>
+        <View style={styles.headerContent}>
+          <View>
+            <Text style={styles.welcomeText}>Welcome back,</Text>
+            <Text style={styles.userName}>{user?.email}</Text>
+            <Text style={styles.userRole}>{user?.role?.toUpperCase()}</Text>
+          </View>
+          <Pressable style={styles.signOutButton} onPress={handleSignOut}>
+            <Text style={styles.signOutText}>Sign Out</Text>
+          </Pressable>
         </View>
-        <Pressable style={styles.signOutButton} onPress={handleSignOut}>
-          <Text style={styles.signOutText}>Sign Out</Text>
-        </Pressable>
       </Animatable.View>
 
-      <Animatable.View animation="fadeInUp" delay={300} style={styles.content}>
-        <View style={styles.statsContainer}>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>{tickets.length}</Text>
-            <Text style={styles.statLabel}>Total Tickets</Text>
+      <Animatable.View animation="fadeInUp" delay={200} style={styles.content}>
+        {user?.role === 'fueler' && (
+          <>
+            <View style={styles.actionSection}>
+              <Text style={styles.sectionTitle}>Fuel Operations</Text>
+              <View style={styles.actionButtons}>
+                <Pressable 
+                  style={[styles.actionButton, { backgroundColor: '#007AFF' }]}
+                  onPress={() => router.push('/fuel-uplift')}
+                >
+                  <Text style={styles.actionButtonText}>⛽ Fuel Uplift</Text>
+                </Pressable>
+                <Pressable 
+                  style={[styles.actionButton, { backgroundColor: '#FF6B35' }]}
+                  onPress={() => router.push('/fuel-dispersion')}
+                >
+                  <Text style={styles.actionButtonText}>🚛 Fuel Dispersion</Text>
+                </Pressable>
+              </View>
+            </View>
+          </>
+        )}
+
+        {user?.role === 'cto' && (
+          <View style={styles.actionSection}>
+            <Text style={styles.sectionTitle}>CTO Actions</Text>
+            <View style={styles.actionButtons}>
+              <Pressable 
+                style={[styles.actionButton, { backgroundColor: '#28a745' }]}
+                onPress={() => router.push('/(tabs)/approvals')}
+              >
+                <Text style={styles.actionButtonText}>✅ Approvals ({stats.pending})</Text>
+              </Pressable>
+              <Pressable 
+                style={[styles.actionButton, { backgroundColor: '#6c757d' }]}
+                onPress={() => router.push('/all-tickets')}
+              >
+                <Text style={styles.actionButtonText}>📋 View All Tickets</Text>
+              </Pressable>
+            </View>
           </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
-              {tickets.filter(t => t.status === 'pending').length}
-            </Text>
-            <Text style={styles.statLabel}>Pending</Text>
-          </View>
-          <View style={styles.statCard}>
-            <Text style={styles.statNumber}>
-              {tickets.filter(t => t.status === 'approved').length}
-            </Text>
-            <Text style={styles.statLabel}>Approved</Text>
+        )}
+
+        <View style={styles.statsSection}>
+          <Text style={styles.sectionTitle}>Ticket Statistics</Text>
+          <View style={styles.statsGrid}>
+            <View style={[styles.statCard, { backgroundColor: '#fff3cd' }]}>
+              <Text style={styles.statNumber}>{stats.pending}</Text>
+              <Text style={styles.statLabel}>Pending</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: '#d4edda' }]}>
+              <Text style={styles.statNumber}>{stats.approved}</Text>
+              <Text style={styles.statLabel}>Approved</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: '#f8d7da' }]}>
+              <Text style={styles.statNumber}>{stats.rejected}</Text>
+              <Text style={styles.statLabel}>Rejected</Text>
+            </View>
+            <View style={[styles.statCard, { backgroundColor: '#e2e3e5' }]}>
+              <Text style={styles.statNumber}>{stats.closed}</Text>
+              <Text style={styles.statLabel}>Closed</Text>
+            </View>
           </View>
         </View>
-
-        {user?.role === 'fueler' && (
-          <Pressable 
-            style={styles.createTicketButton}
-            onPress={() => router.push('/create-ticket')}
-          >
-            <Text style={styles.createTicketText}>Create New Ticket</Text>
-          </Pressable>
-        )}
 
         <View style={styles.recentTickets}>
           <Text style={styles.sectionTitle}>Recent Tickets</Text>
@@ -138,16 +186,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#f8f9fa',
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 20,
-    paddingTop: 60,
     backgroundColor: 'white',
+    paddingTop: 60,
+    paddingBottom: 20,
+    paddingHorizontal: 20,
     borderBottomWidth: 1,
     borderBottomColor: '#e9ecef',
   },
-  greeting: {
+  headerContent: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+  },
+  welcomeText: {
     fontSize: 16,
     color: '#6c757d',
   },
@@ -159,7 +210,8 @@ const styles = StyleSheet.create({
   userRole: {
     fontSize: 12,
     color: '#007AFF',
-    fontWeight: '500',
+    fontWeight: '600',
+    marginTop: 4,
   },
   signOutButton: {
     backgroundColor: '#dc3545',
@@ -169,19 +221,26 @@ const styles = StyleSheet.create({
   },
   signOutText: {
     color: 'white',
-    fontWeight: '500',
+    fontWeight: '600',
   },
   content: {
     padding: 20,
+    gap: 24,
   },
-  statsContainer: {
+  actionSection: {
+    gap: 16,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  actionButtons: {
     flexDirection: 'row',
     gap: 12,
-    marginBottom: 20,
   },
-  statCard: {
+  actionButton: {
     flex: 1,
-    backgroundColor: 'white',
     padding: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -191,36 +250,36 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
+  actionButtonText: {
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  statsSection: {
+    gap: 16,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    padding: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+  },
   statNumber: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#007AFF',
+    color: '#333',
   },
   statLabel: {
     fontSize: 12,
     color: '#6c757d',
     marginTop: 4,
   },
-  createTicketButton: {
-    backgroundColor: '#007AFF',
-    padding: 16,
-    borderRadius: 12,
-    alignItems: 'center',
-    marginBottom: 20,
-  },
-  createTicketText: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '600',
-  },
   recentTickets: {
-    gap: 12,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
-    marginBottom: 12,
+    gap: 16,
   },
   ticketCard: {
     backgroundColor: 'white',
@@ -240,7 +299,7 @@ const styles = StyleSheet.create({
   },
   ticketSiteId: {
     fontSize: 16,
-    fontWeight: '600',
+    fontWeight: 'bold',
     color: '#333',
   },
   statusBadge: {
@@ -254,12 +313,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   ticketType: {
-    fontSize: 14,
-    color: '#6c757d',
-    marginBottom: 4,
+    fontSize: 12,
+    color: '#007AFF',
+    fontWeight: '500',
   },
   ticketDate: {
     fontSize: 12,
-    color: '#adb5bd',
+    color: '#6c757d',
+    marginTop: 4,
   },
 });
