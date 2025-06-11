@@ -23,5 +23,5 @@ export default function Index() {
     return <Redirect href="/waiting-approval" />;
   }
 
-  return <Redirect href="/(app)/(tabs)" />;
+  return <Redirect href="/(tabs)" />;
 }

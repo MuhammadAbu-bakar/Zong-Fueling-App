@@ -29,7 +29,7 @@ export default function LoginScreen() {
     setLoading(true);
     try {
       await signIn(email, password);
-      router.replace('/(app)/(tabs)');
+      router.replace('/(tabs)');
     } catch (error: any) {
       Alert.alert('Login Failed', error.message);
     } finally {
