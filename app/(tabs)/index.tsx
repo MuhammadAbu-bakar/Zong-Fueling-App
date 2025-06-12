@@ -19,8 +19,12 @@ export default function DashboardScreen() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchTickets();
-  }, []);
+    if (user?.role === 'cto') {
+      fetchTickets();
+    } else {
+      setLoading(false);
+    }
+  }, [user]);
 
   const fetchTickets = async () => {
     if (user?.role === 'cto') {
@@ -30,10 +34,15 @@ export default function DashboardScreen() {
           .select('*')
           .order('created_at', { ascending: false });
         
-        if (error) throw error;
-        setTickets(data || []);
+        if (error) {
+          console.error('Error fetching tickets:', error);
+          setTickets([]);
+        } else {
+          setTickets(data || []);
+        }
       } catch (error) {
         console.error('Error fetching tickets:', error);
+        setTickets([]);
       }
     }
     setLoading(false);
@@ -92,7 +101,7 @@ export default function DashboardScreen() {
       </Animatable.View>
 
       <Animatable.View animation="fadeInUp" delay={200} style={styles.content}>
-        {user?.role === 'fueler' && (
+        {user?.role === 'fueler' && !loading && (
           <View style={styles.fuelerMenu}>
             <Text style={styles.menuTitle}>Fuel Management</Text>
             <Text style={styles.menuDescription}>Select an operation to begin</Text>
