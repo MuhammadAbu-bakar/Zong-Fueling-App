@@ -30,7 +30,7 @@ export default function FuelUpliftScreen() {
   const fetchSites = async () => {
     try {
       const { data, error } = await supabase
-        .from('sites')
+        .from('Site Id')
         .select('*')
         .order('site_id');
 
@@ -53,7 +53,7 @@ export default function FuelUpliftScreen() {
     setLoading(true);
     try {
       const { data, error } = await supabase
-        .from('sites')
+        .from('Site Id')
         .select('*')
         .eq('site_id', siteId)
         .single();
@@ -93,7 +93,7 @@ export default function FuelUpliftScreen() {
       const initiated = siteData.consumptionPercentage >= 85;
       
       const { error } = await supabase
-        .from('tickets')
+        .from('Uplift')
         .insert({
           site_id: selectedSiteId,
           fueler_id: user?.id,

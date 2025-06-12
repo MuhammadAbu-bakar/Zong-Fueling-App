@@ -50,7 +50,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const fetchUserProfile = async (userId: string) => {
     try {
       const { data, error } = await supabase
-        .from('users')
+        .from('Fueling Team')
         .select('*')
         .eq('id', userId)
         .single();
@@ -76,7 +76,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (data.user) {
       // Create user profile
       const { error: profileError } = await supabase
-        .from('users')
+        .from('Fueling Team')
         .insert({
           id: data.user.id,
           email,

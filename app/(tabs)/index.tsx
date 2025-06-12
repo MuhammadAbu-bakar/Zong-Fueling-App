@@ -30,7 +30,7 @@ export default function DashboardScreen() {
     if (user?.role === 'cto') {
       try {
         const { data, error } = await supabase
-          .from('tickets')
+          .from('Uplift')
           .select('*')
           .order('created_at', { ascending: false });
         
