@@ -23,13 +23,14 @@ export default function RootLayout() {
         <Stack screenOptions={{ headerShown: false }}>
           <Stack.Screen name="index" />
           <Stack.Screen name="welcome" />
-          <Stack.Screen name="auth" />
+          <Stack.Screen name="auth/login" />
+          <Stack.Screen name="auth/signup" />
           <Stack.Screen name="(tabs)" />
           <Stack.Screen name="create-ticket" />
           <Stack.Screen name="fuel-uplift" />
           <Stack.Screen name="fuel-dispersion" />
           <Stack.Screen name="all-tickets" />
-          <Stack.Screen name="fueler-input" />
+          <Stack.Screen name="fueler-input/[id]" />
           <Stack.Screen name="waiting-approval" />
         </Stack>
         <StatusBar style="auto" />

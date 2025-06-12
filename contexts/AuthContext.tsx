@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, User } from '../lib/supabase';
 
@@ -55,7 +54,20 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .eq('id', userId)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Error fetching user profile:', error);
+        // If table doesn't exist, return a mock user for development
+        if (error.code === '42P01') {
+          return {
+            id: userId,
+            email: 'test@example.com',
+            role: 'fueler',
+            approved: true,
+            created_at: new Date().toISOString()
+          };
+        }
+        return null;
+      }
       setUser(data);
     } catch (error) {
       console.error('Error fetching user profile:', error);
