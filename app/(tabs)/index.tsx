@@ -23,22 +23,20 @@ export default function DashboardScreen() {
   }, []);
 
   const fetchTickets = async () => {
-    try {
-      let query = supabase.from('tickets').select('*');
-      
-      if (user?.role === 'fueler') {
-        query = query.eq('fueler_id', user.id);
+    if (user?.role === 'cto') {
+      try {
+        const { data, error } = await supabase
+          .from('tickets')
+          .select('*')
+          .order('created_at', { ascending: false });
+        
+        if (error) throw error;
+        setTickets(data || []);
+      } catch (error) {
+        console.error('Error fetching tickets:', error);
       }
-      
-      const { data, error } = await query.order('created_at', { ascending: false });
-      
-      if (error) throw error;
-      setTickets(data || []);
-    } catch (error) {
-      console.error('Error fetching tickets:', error);
-    } finally {
-      setLoading(false);
     }
+    setLoading(false);
   };
 
   const handleSignOut = async () => {
@@ -96,6 +94,9 @@ export default function DashboardScreen() {
       <Animatable.View animation="fadeInUp" delay={200} style={styles.content}>
         {user?.role === 'fueler' && (
           <View style={styles.fuelerMenu}>
+            <Text style={styles.menuTitle}>Fuel Management</Text>
+            <Text style={styles.menuDescription}>Select an operation to begin</Text>
+            
             <Pressable 
               style={[styles.menuTile, { backgroundColor: '#007AFF' }]}
               onPress={() => router.push('/fuel-uplift')}
@@ -231,7 +232,20 @@ const styles = StyleSheet.create({
   },
   fuelerMenu: {
     gap: 20,
-    paddingTop: 40,
+    paddingTop: 20,
+  },
+  menuTitle: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  menuDescription: {
+    fontSize: 16,
+    color: '#6c757d',
+    textAlign: 'center',
+    marginBottom: 20,
   },
   menuTile: {
     padding: 32,
