@@ -31,8 +31,8 @@ export default function TabLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Dashboard',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          title: user?.role === 'fueler' ? 'Menu' : 'Dashboard',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name={user?.role === 'fueler' ? "list.bullet" : "house.fill"} color={color} />,
         }}
       />
       {user?.role === 'fueler' && (
@@ -41,6 +41,7 @@ export default function TabLayout() {
           options={{
             title: 'Tickets',
             tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+            href: null, // Hide this tab
           }}
         />
       )}

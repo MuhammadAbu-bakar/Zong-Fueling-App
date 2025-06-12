@@ -95,86 +95,88 @@ export default function DashboardScreen() {
 
       <Animatable.View animation="fadeInUp" delay={200} style={styles.content}>
         {user?.role === 'fueler' && (
-          <>
-            <View style={styles.actionSection}>
-              <Text style={styles.sectionTitle}>Fuel Operations</Text>
-              <View style={styles.actionButtons}>
-                <Pressable 
-                  style={[styles.actionButton, { backgroundColor: '#007AFF' }]}
-                  onPress={() => router.push('/fuel-uplift')}
-                >
-                  <Text style={styles.actionButtonText}>⛽ Fuel Uplift</Text>
-                </Pressable>
-                <Pressable 
-                  style={[styles.actionButton, { backgroundColor: '#FF6B35' }]}
-                  onPress={() => router.push('/fuel-dispersion')}
-                >
-                  <Text style={styles.actionButtonText}>🚛 Fuel Dispersion</Text>
-                </Pressable>
-              </View>
-            </View>
-          </>
+          <View style={styles.fuelerMenu}>
+            <Pressable 
+              style={[styles.menuTile, { backgroundColor: '#007AFF' }]}
+              onPress={() => router.push('/fuel-uplift')}
+            >
+              <Text style={styles.menuTileIcon}>⛽</Text>
+              <Text style={styles.menuTileTitle}>Fuel Uplift</Text>
+              <Text style={styles.menuTileSubtitle}>Add fuel to storage tanks</Text>
+            </Pressable>
+            
+            <Pressable 
+              style={[styles.menuTile, { backgroundColor: '#FF6B35' }]}
+              onPress={() => router.push('/fuel-dispersion')}
+            >
+              <Text style={styles.menuTileIcon}>🚛</Text>
+              <Text style={styles.menuTileTitle}>Fuel Dispersion</Text>
+              <Text style={styles.menuTileSubtitle}>Distribute fuel to vehicles</Text>
+            </Pressable>
+          </View>
         )}
 
         {user?.role === 'cto' && (
-          <View style={styles.actionSection}>
-            <Text style={styles.sectionTitle}>CTO Actions</Text>
-            <View style={styles.actionButtons}>
-              <Pressable 
-                style={[styles.actionButton, { backgroundColor: '#28a745' }]}
-                onPress={() => router.push('/(tabs)/approvals')}
-              >
-                <Text style={styles.actionButtonText}>✅ Approvals ({stats.pending})</Text>
-              </Pressable>
-              <Pressable 
-                style={[styles.actionButton, { backgroundColor: '#6c757d' }]}
-                onPress={() => router.push('/all-tickets')}
-              >
-                <Text style={styles.actionButtonText}>📋 View All Tickets</Text>
-              </Pressable>
+          <>
+            <View style={styles.actionSection}>
+              <Text style={styles.sectionTitle}>CTO Actions</Text>
+              <View style={styles.actionButtons}>
+                <Pressable 
+                  style={[styles.actionButton, { backgroundColor: '#28a745' }]}
+                  onPress={() => router.push('/(tabs)/approvals')}
+                >
+                  <Text style={styles.actionButtonText}>✅ Approvals ({stats.pending})</Text>
+                </Pressable>
+                <Pressable 
+                  style={[styles.actionButton, { backgroundColor: '#6c757d' }]}
+                  onPress={() => router.push('/all-tickets')}
+                >
+                  <Text style={styles.actionButtonText}>📋 View All Tickets</Text>
+                </Pressable>
+              </View>
             </View>
-          </View>
-        )}
 
-        <View style={styles.statsSection}>
-          <Text style={styles.sectionTitle}>Ticket Statistics</Text>
-          <View style={styles.statsGrid}>
-            <View style={[styles.statCard, { backgroundColor: '#fff3cd' }]}>
-              <Text style={styles.statNumber}>{stats.pending}</Text>
-              <Text style={styles.statLabel}>Pending</Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: '#d4edda' }]}>
-              <Text style={styles.statNumber}>{stats.approved}</Text>
-              <Text style={styles.statLabel}>Approved</Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: '#f8d7da' }]}>
-              <Text style={styles.statNumber}>{stats.rejected}</Text>
-              <Text style={styles.statLabel}>Rejected</Text>
-            </View>
-            <View style={[styles.statCard, { backgroundColor: '#e2e3e5' }]}>
-              <Text style={styles.statNumber}>{stats.closed}</Text>
-              <Text style={styles.statLabel}>Closed</Text>
-            </View>
-          </View>
-        </View>
-
-        <View style={styles.recentTickets}>
-          <Text style={styles.sectionTitle}>Recent Tickets</Text>
-          {tickets.slice(0, 5).map((ticket) => (
-            <View key={ticket.id} style={styles.ticketCard}>
-              <View style={styles.ticketHeader}>
-                <Text style={styles.ticketSiteId}>Site: {ticket.site_id}</Text>
-                <View style={[styles.statusBadge, { backgroundColor: getStatusColor(ticket.status) }]}>
-                  <Text style={styles.statusText}>{ticket.status.toUpperCase()}</Text>
+            <View style={styles.statsSection}>
+              <Text style={styles.sectionTitle}>Ticket Statistics</Text>
+              <View style={styles.statsGrid}>
+                <View style={[styles.statCard, { backgroundColor: '#fff3cd' }]}>
+                  <Text style={styles.statNumber}>{stats.pending}</Text>
+                  <Text style={styles.statLabel}>Pending</Text>
+                </View>
+                <View style={[styles.statCard, { backgroundColor: '#d4edda' }]}>
+                  <Text style={styles.statNumber}>{stats.approved}</Text>
+                  <Text style={styles.statLabel}>Approved</Text>
+                </View>
+                <View style={[styles.statCard, { backgroundColor: '#f8d7da' }]}>
+                  <Text style={styles.statNumber}>{stats.rejected}</Text>
+                  <Text style={styles.statLabel}>Rejected</Text>
+                </View>
+                <View style={[styles.statCard, { backgroundColor: '#e2e3e5' }]}>
+                  <Text style={styles.statNumber}>{stats.closed}</Text>
+                  <Text style={styles.statLabel}>Closed</Text>
                 </View>
               </View>
-              <Text style={styles.ticketType}>{ticket.ticket_type.toUpperCase()}</Text>
-              <Text style={styles.ticketDate}>
-                {new Date(ticket.created_at).toLocaleDateString()}
-              </Text>
             </View>
-          ))}
-        </View>
+
+            <View style={styles.recentTickets}>
+              <Text style={styles.sectionTitle}>Recent Tickets</Text>
+              {tickets.slice(0, 5).map((ticket) => (
+                <View key={ticket.id} style={styles.ticketCard}>
+                  <View style={styles.ticketHeader}>
+                    <Text style={styles.ticketSiteId}>Site: {ticket.site_id}</Text>
+                    <View style={[styles.statusBadge, { backgroundColor: getStatusColor(ticket.status) }]}>
+                      <Text style={styles.statusText}>{ticket.status.toUpperCase()}</Text>
+                    </View>
+                  </View>
+                  <Text style={styles.ticketType}>{ticket.ticket_type.toUpperCase()}</Text>
+                  <Text style={styles.ticketDate}>
+                    {new Date(ticket.created_at).toLocaleDateString()}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
       </Animatable.View>
     </ScrollView>
   );
@@ -226,6 +228,39 @@ const styles = StyleSheet.create({
   content: {
     padding: 20,
     gap: 24,
+  },
+  fuelerMenu: {
+    gap: 20,
+    paddingTop: 40,
+  },
+  menuTile: {
+    padding: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 6,
+    minHeight: 160,
+    justifyContent: 'center',
+  },
+  menuTileIcon: {
+    fontSize: 48,
+    marginBottom: 16,
+  },
+  menuTileTitle: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  menuTileSubtitle: {
+    color: 'rgba(255, 255, 255, 0.8)',
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
   },
   actionSection: {
     gap: 16,
