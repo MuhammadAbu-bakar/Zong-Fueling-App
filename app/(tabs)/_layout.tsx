@@ -1,4 +1,3 @@
-
 import { Tabs } from 'expo-router';
 import React from 'react';
 import { Platform } from 'react-native';
@@ -35,25 +34,6 @@ export default function TabLayout() {
           tabBarIcon: ({ color }) => <IconSymbol size={28} name={user?.role === 'fueler' ? "list.bullet" : "house.fill"} color={color} />,
         }}
       />
-      {user?.role === 'fueler' && (
-        <Tabs.Screen
-          name="tickets"
-          options={{
-            title: 'Tickets',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-            href: null, // Hide this tab
-          }}
-        />
-      )}
-      {user?.role === 'cto' && (
-        <Tabs.Screen
-          name="approvals"
-          options={{
-            title: 'Approvals',
-            tabBarIcon: ({ color }) => <IconSymbol size={28} name="chevron.right" color={color} />,
-          }}
-        />
-      )}
     </Tabs>
   );
 }
