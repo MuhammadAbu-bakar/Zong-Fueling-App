@@ -35,13 +35,28 @@ export default function DashboardScreen() {
           .order('created_at', { ascending: false });
         
         if (error) {
-          console.error('Error fetching tickets:', error);
+          console.error('Error fetching uplift records:', error);
           setTickets([]);
         } else {
-          setTickets(data || []);
+          // Convert uplift records to ticket format for display
+          const ticketData = (data || []).map(uplift => ({
+            id: uplift.id,
+            site_id: uplift.fuel_team, // Use fuel team as identifier
+            fueler_id: uplift.user_email,
+            ticket_type: 'uplift',
+            status: uplift.status || 'pending',
+            initiated: true,
+            fuel_consumption: uplift.fuel_quantity_collected,
+            consumption_percentage: 0,
+            cto_comments: '',
+            fueler_input: null,
+            created_at: uplift.created_at,
+            updated_at: uplift.updated_at || uplift.created_at
+          }));
+          setTickets(ticketData);
         }
       } catch (error) {
-        console.error('Error fetching tickets:', error);
+        console.error('Error fetching uplift records:', error);
         setTickets([]);
       }
     }
@@ -169,16 +184,16 @@ export default function DashboardScreen() {
             </View>
 
             <View style={styles.recentTickets}>
-              <Text style={styles.sectionTitle}>Recent Tickets</Text>
+              <Text style={styles.sectionTitle}>Recent Uplift Records</Text>
               {tickets.slice(0, 5).map((ticket) => (
                 <View key={ticket.id} style={styles.ticketCard}>
                   <View style={styles.ticketHeader}>
-                    <Text style={styles.ticketSiteId}>Site: {ticket.site_id}</Text>
+                    <Text style={styles.ticketSiteId}>Team: {ticket.site_id}</Text>
                     <View style={[styles.statusBadge, { backgroundColor: getStatusColor(ticket.status) }]}>
                       <Text style={styles.statusText}>{ticket.status.toUpperCase()}</Text>
                     </View>
                   </View>
-                  <Text style={styles.ticketType}>{ticket.ticket_type.toUpperCase()}</Text>
+                  <Text style={styles.ticketType}>FUEL UPLIFT - {ticket.fuel_consumption}L</Text>
                   <Text style={styles.ticketDate}>
                     {new Date(ticket.created_at).toLocaleDateString()}
                   </Text>

@@ -14,7 +14,7 @@ export interface User {
   created_at: string;
 }
 
-export interface Site {
+export interface SiteId {
   id: string;
   site_id: string;
   last_fueling_date: string;
@@ -25,17 +25,46 @@ export interface Site {
   daysSinceLastFueling?: number;
 }
 
-export interface Ticket {
+export interface FuelingTeam {
+  id: string;
+  team_name: string;
+  location: string;
+  created_at: string;
+}
+
+export interface Uplift {
+  id: string;
+  fuel_team: string;
+  fueler_name: string;
+  user_email: string;
+  fuel_pump: string;
+  pump_vendor: string;
+  pump_location: string;
+  actual_fuel_time: string;
+  fuel_card: string;
+  card_company?: string;
+  fuel_quantity_collected: number;
+  transaction: boolean;
+  vehicle_image?: string;
+  pump_reading_before?: string;
+  pump_reading_after?: string;
+  fuel_collected_image?: string;
+  after_filled_tank_image?: string;
+  status?: 'pending' | 'approved' | 'rejected' | 'closed';
+  created_at: string;
+  updated_at?: string;
+}
+
+export interface FuelHistory {
   id: string;
   site_id: string;
-  fueler_id: string;
-  ticket_type: 'uplift' | 'dispersion';
-  status: 'pending' | 'approved' | 'rejected' | 'closed';
-  initiated: boolean;
-  fuel_consumption: number;
-  consumption_percentage: number;
-  cto_comments?: string;
-  fueler_input?: any;
+  fuel_team: string;
+  fuel_quantity: number;
+  fuel_time: string;
+  pump_vendor: string;
   created_at: string;
-  updated_at: string;
 }
+
+// Legacy types for backward compatibility
+export interface Site extends SiteId {}
+export interface Ticket extends Uplift {}
