@@ -1,0 +1,321 @@
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ActivityIndicator } from 'react-native';
+import { supabase } from '../../../lib/supabase';
+
+interface GridSummary {
+  grid: string;
+  totalFuel: number;
+  totalSites: number;
+  avgFuelPerSite: number;
+  fuelPercentage: number;
+  lsAvg: number;
+}
+
+export default function GTLGridwiseSummary() {
+  const [gridData, setGridData] = useState<GridSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetchGridSummary();
+  }, []);
+
+  const fetchGridSummary = async () => {
+    try {
+      console.log('Fetching grid summary for Mohammad Irfan...');
+      // First, get all site IDs for Mohammad Irfan
+      const { data: irfanSites, error: irfanError } = await supabase
+        .from('Location')
+        .select('NAME')
+        .eq('CMPAK GTL', 'Mohammad Irfan');
+      const irfanSiteIds = irfanSites?.map(site => site.NAME?.toString()) || [];
+
+      // Get all site IDs and their grids
+      const { data: siteData, error: siteError } = await supabase
+        .from('site_id2')
+        .select('*');
+
+      if (siteError) {
+        console.error('Site data error:', siteError);
+        throw siteError;
+      }
+
+      // Filter siteData to only include Mohammad Irfan's sites
+      const filteredSiteData = siteData?.filter(site => irfanSiteIds.includes(site['Site ID'])) || [];
+
+      // Get current month's date range
+      const today = new Date();
+      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      // Format dates to match DD-MMM-YY format
+      const formatDate = (date: Date) => {
+        const day = String(date.getDate()).padStart(2, '0');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[date.getMonth()];
+        const year = String(date.getFullYear()).slice(-2);
+        return `${day}-${month}-${year}`;
+      };
+      const todayStr = formatDate(today);
+      const firstDayStr = formatDate(firstDay);
+
+      // Get fueling history
+      const { data: fuelData, error: fuelError } = await supabase
+        .from('fueling_history')
+        .select('*')
+        .gte('Date', firstDayStr)
+        .lte('Date', todayStr);
+
+      if (fuelError) {
+        console.error('Fuel data error:', fuelError);
+        throw fuelError;
+      }
+
+      // Filter fuelData to only include Mohammad Irfan's sites
+      const filteredFuelData = fuelData?.filter(record => irfanSiteIds.includes(record['Site ID Name'])) || [];
+
+      // Get DG Running Alarm data for current month and Mohammad Irfan's sites
+      const { data: dgData, error: dgError } = await supabase
+        .from('DG Running Alarm')
+        .select('*')
+        .gte('Date', firstDayStr)
+        .lte('Date', todayStr)
+        .in('Site name', irfanSiteIds.map(Number));
+
+      if (dgError) {
+        console.error('DG Running Alarm data error:', dgError);
+        throw dgError;
+      }
+
+      // Create a map of site IDs to their grids and collect all grids
+      const siteGridMap = new Map();
+      const allGrids = new Set<string>();
+      filteredSiteData.forEach(site => {
+        const grid = site['Grid'];
+        if (grid && grid !== '-' && grid.trim() !== '') {
+          siteGridMap.set(site['Site ID'], grid);
+          allGrids.add(grid);
+        }
+      });
+
+      // Calculate average LS per grid
+      const gridLS: Record<string, number[]> = {};
+      dgData?.forEach(row => {
+        const siteId = row['Site name']?.toString();
+        const grid = siteGridMap.get(siteId);
+        if (!grid) return;
+        // Parse LS as float (may be null or string)
+        const lsVal = row['Load Shedding'] ? parseFloat(row['Load Shedding']) : null;
+        if (lsVal !== null && !isNaN(lsVal)) {
+          if (!gridLS[grid]) gridLS[grid] = [];
+          gridLS[grid].push(lsVal);
+        }
+      });
+
+      // Initialize all grids with zero values
+      const gridSummaries = new Map<string, { totalFuel: number; sites: Set<string>; lsAvg: number }>();
+      allGrids.forEach(grid => {
+        const lsArr = gridLS[grid] || [];
+        const lsAvg = lsArr.length > 0 ? lsArr.reduce((a, b) => a + b, 0) / lsArr.length : 0;
+        gridSummaries.set(grid, {
+          totalFuel: 0,
+          sites: new Set(),
+          lsAvg,
+        });
+      });
+
+      filteredFuelData.forEach(record => {
+        const siteId = record['Site ID Name'];
+        const grid = siteGridMap.get(siteId);
+        if (!grid) return;
+        const fuel = Number(record['Fuel Quantity Filled']) || 0;
+        const summary = gridSummaries.get(grid);
+        if (summary) {
+          summary.totalFuel += fuel;
+          summary.sites.add(siteId);
+        }
+      });
+
+      // Calculate total fuel for percentage calculations
+      const totalFuelAll = Array.from(gridSummaries.values())
+        .reduce((sum, { totalFuel }) => sum + totalFuel, 0);
+
+      // Convert to array and calculate additional metrics
+      const summaryArray = Array.from(gridSummaries.entries())
+        .map(([grid, summary]) => ({
+          grid,
+          totalFuel: summary.totalFuel,
+          totalSites: summary.sites.size,
+          avgFuelPerSite: summary.sites.size > 0 
+            ? Math.round(summary.totalFuel / summary.sites.size) 
+            : 0,
+          fuelPercentage: totalFuelAll > 0 
+            ? (summary.totalFuel / totalFuelAll) * 100 
+            : 0,
+          lsAvg: summary.lsAvg,
+        }))
+        .filter(summary => summary.grid !== 'Unassigned')
+        .sort((a, b) => {
+          // Custom sorting: C1 first, then C6, then others alphabetically
+          if (a.grid === 'C1' && b.grid !== 'C1') return -1;
+          if (b.grid === 'C1' && a.grid !== 'C1') return 1;
+          if (a.grid === 'C6' && b.grid !== 'C6') return -1;
+          if (b.grid === 'C6' && a.grid !== 'C6') return 1;
+          return a.grid.localeCompare(b.grid);
+        });
+
+      setGridData(summaryArray);
+    } catch (error) {
+      console.error('Error in fetchGridSummary:', error);
+      setError('Failed to fetch grid summary data');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color="#007AFF" />
+      </View>
+    );
+  }
+
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <Text style={styles.title}>GTL Gridwise Summary</Text>
+      {gridData.length === 0 ? (
+        <View style={styles.noDataContainer}>
+          <Text style={styles.noDataText}>No data available for the current month</Text>
+        </View>
+      ) : (
+        <>
+          <View style={styles.headerRow}>
+            <Text style={[styles.headerCell, styles.gridCell]}>Grid</Text>
+            <Text style={[styles.headerCell, styles.numberCell]}>Sites</Text>
+            <Text style={[styles.headerCell, styles.numberCell]}>Total Fuel (L)</Text>
+            <Text style={[styles.headerCell, styles.numberCell]}>Avg/Site</Text>
+            <Text style={[styles.headerCell, styles.numberCell]}>%</Text>
+            <Text style={[styles.headerCell, styles.numberCell]}>LS</Text>
+          </View>
+          <View style={styles.tableContainer}>
+            {gridData.map((grid, index) => (
+              <View 
+                key={grid.grid} 
+                style={[
+                  styles.row,
+                  index % 2 === 0 ? styles.evenRow : styles.oddRow
+                ]}
+              >
+                <Text style={[styles.cell, styles.gridCell]} numberOfLines={1}>
+                  {grid.grid}
+                </Text>
+                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
+                  {grid.totalSites}
+                </Text>
+                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
+                  {grid.totalFuel.toLocaleString()}
+                </Text>
+                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
+                  {grid.avgFuelPerSite.toLocaleString()}
+                </Text>
+                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
+                  {grid.fuelPercentage.toFixed(1)}%
+                </Text>
+                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
+                  {(grid.lsAvg ?? 0).toFixed(1)}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </>
+      )}
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  title: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 16,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    backgroundColor: '#f8f9fa',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    marginBottom: 8,
+  },
+  headerCell: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  gridCell: {
+    flex: 2,
+  },
+  numberCell: {
+    flex: 1,
+    textAlign: 'center',
+  },
+  tableContainer: {
+    // No maxHeight, match RM view
+  },
+  row: {
+    flexDirection: 'row',
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+    position: 'relative',
+  },
+  evenRow: {
+    backgroundColor: '#f8f9fa',
+  },
+  oddRow: {
+    backgroundColor: '#fff',
+  },
+  cell: {
+    fontSize: 14,
+    color: '#333',
+  },
+  loadingContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  errorText: {
+    color: '#dc3545',
+    fontSize: 14,
+  },
+  noDataContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  noDataText: {
+    color: '#6c757d',
+    fontSize: 14,
+  },
+}); 

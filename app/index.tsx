@@ -1,11 +1,10 @@
-
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Redirect } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function Index() {
-  const { user, loading } = useAuth();
+  const { loading } = useAuth();
 
   if (loading) {
     return (
@@ -15,13 +14,6 @@ export default function Index() {
     );
   }
 
-  if (!user) {
-    return <Redirect href="/welcome" />;
-  }
-
-  if (user.role === 'fueler' && !user.approved) {
-    return <Redirect href="/waiting-approval" />;
-  }
-
-  return <Redirect href="/(tabs)" />;
+  // Always show welcome screen first
+  return <Redirect href="/welcome" />;
 }

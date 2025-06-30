@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   View, 
@@ -18,7 +17,7 @@ export default function SignupScreen() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [role, setRole] = useState<'fueler' | 'cto'>('fueler');
+  const [role, setRole] = useState<'fueler' | 'cto' | 'coordinator' | 'rm'>('fueler');
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
 
@@ -40,7 +39,7 @@ export default function SignupScreen() {
         'Success', 
         role === 'fueler' 
           ? 'Account created! Please wait for CTO approval.'
-          : 'CTO account created successfully!',
+          : `${role.toUpperCase()} account created successfully!`,
         [{ text: 'OK', onPress: () => router.replace('/auth/login') }]
       );
     } catch (error: any) {
@@ -77,6 +76,22 @@ export default function SignupScreen() {
               >
                 <Text style={[styles.roleButtonText, role === 'cto' && styles.roleButtonTextActive]}>
                   CTO
+                </Text>
+              </Pressable>
+              <Pressable 
+                style={[styles.roleButton, role === 'coordinator' && styles.roleButtonActive]}
+                onPress={() => setRole('coordinator')}
+              >
+                <Text style={[styles.roleButtonText, role === 'coordinator' && styles.roleButtonTextActive]}>
+                  Coordinator
+                </Text>
+              </Pressable>
+              <Pressable 
+                style={[styles.roleButton, role === 'rm' && styles.roleButtonActive]}
+                onPress={() => setRole('rm')}
+              >
+                <Text style={[styles.roleButtonText, role === 'rm' && styles.roleButtonTextActive]}>
+                  RM
                 </Text>
               </Pressable>
             </View>

@@ -1,4 +1,3 @@
-
 {
   "expo": {
     "name": "Fuel Management App",
@@ -10,14 +9,24 @@
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.fuelmanagement.app",
+      "config": {
+        "googleMapsApiKey": "AIzaSyBX00DjvnNtfeAIDTO8vXv1NPjnXRJV8n8"
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
       },
-      "edgeToEdgeEnabled": true
+      "edgeToEdgeEnabled": true,
+      "package": "com.fuelmanagement.app",
+      "config": {
+        "googleMaps": {
+          "apiKey": "AIzaSyBX00DjvnNtfeAIDTO8vXv1NPjnXRJV8n8"
+        }
+      }
     },
     "web": {
       "bundler": "metro",
@@ -34,7 +43,8 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      "react-native-maps"
     ],
     "experiments": {
       "typedRoutes": true

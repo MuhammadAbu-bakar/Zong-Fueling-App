@@ -1,16 +1,45 @@
-
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, Text, StyleSheet, Pressable, Dimensions, Image } from 'react-native';
 import { router } from 'expo-router';
 import * as Animatable from 'react-native-animatable';
 import { LinearGradient } from 'expo-linear-gradient';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
 export default function WelcomeScreen() {
+  const { user } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      // Route based on user role
+      switch (user.role) {
+        case 'fueler':
+          router.replace('/fueler/index' as any);
+          break;
+        case 'rm':
+          router.replace('/rm/(tabs)' as any);
+          break;
+        case 'coordinator':
+          router.replace('/coordinator/coordinator' as any);
+          break;
+        case 'cto':
+          router.replace('/cto/index' as any);
+          break;
+        case 'security':
+          router.replace('/security' as any);
+          break;
+        default:
+          // If no role or unknown role, stay on welcome screen
+          break;
+      }
+    }
+  }, [user]);
+
   return (
     <LinearGradient
-      colors={['#667eea', '#764ba2']}
+      colors={['#8CC63E', '#8CC63E', '#ffffff']}
+      locations={[0, 0.6, 1]}
       style={styles.container}
     >
       <Animatable.View 
@@ -18,12 +47,24 @@ export default function WelcomeScreen() {
         duration={1500}
         style={styles.content}
       >
+        <Animatable.View 
+          animation="bounceIn"
+          duration={1500}
+          style={styles.logoContainer}
+        >
+          <Image
+            source={require('../../Fueling-App/assets/images/zong-logo.png')}
+            style={styles.logo}
+            resizeMode="contain"
+          />
+        </Animatable.View>
+
         <Animatable.Text 
           animation="pulse" 
           iterationCount="infinite"
           style={styles.title}
         >
-          Fuel Management
+          Fuel Management App
         </Animatable.Text>
         
         <Animatable.Text 
@@ -68,6 +109,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingHorizontal: 20,
   },
+  logoContainer: {
+    
+    marginBottom: 20,
+    alignItems: 'center',
+    backgroundColor: 'white',
+    padding: 3,
+    borderRadius: 7,
+    width: 200,
+    height: 100,
+  },
+  logo: {
+    marginTop:-23,
+    width: 250,
+    height: 150,
+  },
   title: {
     fontSize: 32,
     fontWeight: 'bold',
@@ -101,7 +157,7 @@ const styles = StyleSheet.create({
   buttonText: {
     fontSize: 16,
     fontWeight: '600',
-    color: '#667eea',
+    color: '#8CC63E',
   },
   outlineButtonText: {
     color: 'white',

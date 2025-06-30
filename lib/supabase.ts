@@ -1,16 +1,17 @@
+import { createClient } from "@supabase/supabase-js";
+import { UserRole } from "../types/auth";
 
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = 'https://mryvubsvdljptejgpafs.supabase.co';
-const supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yeXZ1YnN2ZGxqcHRlamdwYWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2MzcxMjYsImV4cCI6MjA2NTIxMzEyNn0.FygZhegJYxNTYgdVAGiel5TLVWMi2hV4B6yjvvea80o';
+const supabaseUrl = "https://mryvubsvdljptejgpafs.supabase.co";
+const supabaseAnonKey =
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1yeXZ1YnN2ZGxqcHRlamdwYWZzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2MzcxMjYsImV4cCI6MjA2NTIxMzEyNn0.FygZhegJYxNTYgdVAGiel5TLVWMi2hV4B6yjvvea80o";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export interface User {
   id: string;
   email: string;
-  role: 'fueler' | 'cto';
-  approved: boolean;
+  role: UserRole;
+  approved?: boolean;
   created_at: string;
 }
 
@@ -21,7 +22,7 @@ export interface SiteId {
   fuel_capacity: number;
   current_fuel_level: number;
   created_at: string;
-  consumptionPercentage?: number;
+  consumptionPercentage: number;
   daysSinceLastFueling?: number;
 }
 
@@ -50,7 +51,7 @@ export interface Uplift {
   pump_reading_after?: string;
   fuel_collected_image?: string;
   after_filled_tank_image?: string;
-  status?: 'pending' | 'approved' | 'rejected' | 'closed';
+  status?: "pending" | "approved" | "rejected" | "closed";
   created_at: string;
   updated_at?: string;
 }
@@ -67,4 +68,33 @@ export interface FuelHistory {
 
 // Legacy types for backward compatibility
 export interface Site extends SiteId {}
-export interface Ticket extends Uplift {}
+export interface Ticket {
+  id: string;
+  site_id: string;
+  fueler_id?: string;
+  ticket_type: 'uplift' | 'dispersion';
+  consumption_percentage?: number;
+  fuel_consumption?: number;
+  initiated: boolean;
+  fueler_input?: any;
+  cto_comments?: string;
+  status: 'pending' | 'approved' | 'rejected' | 'closed';
+  fuel_team?: string;
+  fueler_name?: string;
+  user_email?: string;
+  fuel_pump?: string;
+  pump_vendor?: string;
+  pump_location?: string;
+  actual_fuel_time?: string;
+  fuel_card?: string;
+  card_company?: string;
+  fuel_quantity_collected?: number;
+  transaction?: boolean;
+  vehicle_image?: string;
+  pump_reading_before?: string;
+  pump_reading_after?: string;
+  fuel_collected_image?: string;
+  after_filled_tank_image?: string;
+  created_at: string;
+  updated_at?: string;
+}

@@ -1,11 +1,12 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase, User } from '../lib/supabase';
+import { UserRole } from '../types/auth';
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, role: 'fueler' | 'cto') => Promise<void>;
+  signUp: (email: string, password: string, role: UserRole) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -48,6 +49,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const fetchUserProfile = async (userId: string) => {
     try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const userEmail = sessionData.session?.user?.email;
+
       const { data, error } = await supabase
         .from('Fueling Team')
         .select('*')
@@ -56,15 +60,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
       if (error) {
         console.error('Error fetching user profile:', error);
-        // If table doesn't exist, return a mock user for development
+        // If table doesn't exist, set a mock user for development
         if (error.code === '42P01') {
-          return {
+          // Determine role based on email in development
+          let role: UserRole = 'fueler';
+          if (userEmail?.includes('admin')) role = 'admin';
+          if (userEmail?.includes('coordinator')) role = 'coordinator';
+          if (userEmail?.includes('rm')) role = 'rm';
+          if (userEmail?.includes('gtl')) role = 'gtl';
+          if (userEmail?.includes('security')) role = 'security';
+          const mockUser: User = {
             id: userId,
-            email: 'test@example.com',
-            role: 'fueler',
-            approved: true,
+            email: userEmail || 'test@example.com',
+            role: role,
+            approved: role === 'admin' || role === 'coordinator' || role === 'rm' || role === 'fueler' || role === 'security',
             created_at: new Date().toISOString()
           };
+          setUser(mockUser);
+          return;
         }
         return null;
       }
@@ -81,7 +94,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   };
 
-  const signUp = async (email: string, password: string, role: 'fueler' | 'cto') => {
+  const signUp = async (email: string, password: string, role: UserRole) => {
     const { data, error } = await supabase.auth.signUp({ email, password });
     if (error) throw error;
 
@@ -93,7 +106,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           id: data.user.id,
           email,
           role,
-          approved: role === 'cto' // CTOs are auto-approved
+          approved: role === 'admin' || role === 'coordinator' || role === 'rm' || role === 'gtl'
         });
 
       if (profileError) throw profileError;
