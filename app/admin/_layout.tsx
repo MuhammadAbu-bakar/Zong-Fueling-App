@@ -61,6 +61,18 @@ export default function AdminLayout() {
         }}
       />
       <Drawer.Screen
+        name="gtl/(tabs)"
+        options={{
+          title: 'GTL View',
+          drawerLabel: 'GTL View',
+          headerTitle: () => (
+            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
+              GTL View
+            </Text>
+          ),
+        }}
+      />
+      <Drawer.Screen
         name="settings"
         options={{
           title: 'Settings',

@@ -27,7 +27,7 @@ interface Location {
 interface DGAlarmData {
   "Date": string;
   "DG Running Alarm": number | null;
-  "Load Shedding": string | null;
+  "Load Shedding": number | null;
   "Battery": string | null;
   "Complete site down": string | null;
   "Total": number | null;
@@ -114,20 +114,61 @@ export default function GTLMapsScreen() {
 
   const fetchDGAlarmData = async (siteId: number) => {
     try {
+      // Get previous month's date range
+      const now = new Date();
+      const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      const formatDate = (date: Date) => {
+        const day = String(date.getDate()).padStart(2, '0');
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const month = months[date.getMonth()];
+        const year = String(date.getFullYear()).slice(-2);
+        return `${day}-${month}-${year}`;
+      };
+      const firstDayStr = formatDate(firstDay);
+      const lastDayStr = formatDate(lastDay);
+
+      // Fetch all records for the site in the previous month
       const { data, error } = await supabase
         .from('DG Running Alarm')
         .select('*')
         .eq('Site name', siteId)
-        .order('Date', { ascending: false })
-        .limit(1)
-        .single();
+        .gte('Date', firstDayStr)
+        .lte('Date', lastDayStr);
 
       if (error) {
         console.error('Error fetching DG Alarm data:', error);
         return;
       }
 
-      setDgAlarmData(data);
+      if (!data || data.length === 0) {
+        setDgAlarmData({
+          'Date': '',
+          'DG Running Alarm': null,
+          'Load Shedding': null,
+          'Battery': '',
+          'Complete site down': '',
+          'Total': null,
+          'Status': '',
+        });
+        setShowModal(true);
+        return;
+      }
+
+      // Calculate averages
+      const avgDG = data.reduce((sum, row) => sum + (Number(row['DG Running Alarm']) || 0), 0) / data.length;
+      const lsVals = data.map(row => parseFloat(row['Load Shedding'])).filter(v => !isNaN(v));
+      const avgLS = lsVals.length > 0 ? lsVals.reduce((a, b) => a + b, 0) / lsVals.length : null;
+
+      setDgAlarmData({
+        'Date': '',
+        'DG Running Alarm': isNaN(avgDG) ? null : avgDG,
+        'Load Shedding': avgLS,
+        'Battery': '',
+        'Complete site down': '',
+        'Total': null,
+        'Status': '',
+      });
       setShowModal(true);
     } catch (error) {
       console.error('Error fetching DG Alarm data:', error);
@@ -210,32 +251,12 @@ export default function GTLMapsScreen() {
             {dgAlarmData ? (
               <>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Date:</Text>
-                  <Text style={styles.detailValue}>{dgAlarmData.Date}</Text>
+                  <Text style={styles.detailLabel}>Avg DG Running Alarm (Last Month):</Text>
+                  <Text style={styles.detailValue}>{typeof dgAlarmData["DG Running Alarm"] === 'number' && dgAlarmData["DG Running Alarm"] !== null ? dgAlarmData["DG Running Alarm"].toFixed(1) : '-'}</Text>
                 </View>
                 <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>DG Running Alarm:</Text>
-                  <Text style={styles.detailValue}>{dgAlarmData["DG Running Alarm"] || '-'}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Load Shedding:</Text>
-                  <Text style={styles.detailValue}>{dgAlarmData["Load Shedding"] || '-'}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Battery:</Text>
-                  <Text style={styles.detailValue}>{dgAlarmData.Battery || '-'}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Site Down:</Text>
-                  <Text style={styles.detailValue}>{dgAlarmData["Complete site down"] || '-'}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Total:</Text>
-                  <Text style={styles.detailValue}>{dgAlarmData.Total || '-'}</Text>
-                </View>
-                <View style={styles.detailRow}>
-                  <Text style={styles.detailLabel}>Status:</Text>
-                  <Text style={styles.detailValue}>{dgAlarmData.Status || '-'}</Text>
+                  <Text style={styles.detailLabel}>Avg Load Shedding (Last Month):</Text>
+                  <Text style={styles.detailValue}>{typeof dgAlarmData["Load Shedding"] === 'number' && dgAlarmData["Load Shedding"] !== null ? dgAlarmData["Load Shedding"].toFixed(1) : '-'}</Text>
                 </View>
               </>
             ) : (
@@ -299,7 +320,6 @@ export default function GTLMapsScreen() {
               key={`${location.NAME}-${index}`}
               coordinate={coords}
               title={`Site ${location.NAME}`}
-              description={`LS: ${location["Load Shedding"]} | DG Alarm: ${location["DG Running Alarm"]}`}
               pinColor={location["OPERATIONAL STATUS"] === "Active" ? "#4CAF50" : "#FF5722"}
               onPress={() => {
                 setSelectedSite(location);

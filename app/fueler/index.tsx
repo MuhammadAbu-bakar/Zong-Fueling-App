@@ -128,6 +128,9 @@ export default function DispersionInputForm() {
 
   const [pendingSiteIds, setPendingSiteIds] = useState<string[]>([]);
 
+  // Add after calcValues state
+  const [latestFuelRequest, setLatestFuelRequest] = useState<any>(null);
+
   // Fetch dropdown options on mount
   useEffect(() => {
     const fetchDropdownOptions = async () => {
@@ -338,29 +341,20 @@ export default function DispersionInputForm() {
           </View>
         </View>
 
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Calculations</Text>
-          <View style={styles.row}>
-            <Text style={styles.key}>Fueling Date:</Text>
-            <Text style={styles.value}>{form["Fueling Date"] || '-'}</Text>
+
+        {latestFuelRequest && (
+          <View style={styles.card}>
+            <Text style={styles.sectionTitle}>Calculations</Text>
+            <View style={styles.row}><Text style={styles.key}>Last Fueling Date:</Text><Text style={styles.value}>{latestFuelRequest["Last Fueling Date"] || '-'}</Text></View>
+            <View style={styles.row}><Text style={styles.key}>Last Total Fuel:</Text><Text style={styles.value}>{latestFuelRequest["Last Total Fuel"] ?? '-'}</Text></View>
+            <View style={styles.row}><Text style={styles.key}>DG Running Alarm:</Text><Text style={styles.value}>{latestFuelRequest["DG Running Alarm"] ?? '-'}</Text></View>
+            
+            <View style={styles.row}><Text style={styles.key}>Fuel Consumption:</Text><Text style={styles.value}>{latestFuelRequest["Fuel Consumption"] ?? '-'}</Text></View>
+            <View style={styles.row}><Text style={styles.key}>% Consumption:</Text><Text style={styles.value}>{latestFuelRequest["% Consumption"] ?? '-'}</Text></View>
+            
           </View>
-          <View style={styles.row}>
-            <Text style={styles.key}>Last Total Fuel:</Text>
-            <Text style={styles.value}>{form["Last Total Fuel"] ? `${form["Last Total Fuel"]} L` : '-'}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.key}>DG Running Alarm (sum):</Text>
-            <Text style={styles.value}>{calcValues.loading ? '...' : calcValues.dgAlarmSum.toFixed(2)}</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.key}>Fuel Consumption:</Text>
-            <Text style={styles.value}>{calcValues.loading ? '...' : calcValues.fuelConsumption.toFixed(2)} L</Text>
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.key}>% Consumption:</Text>
-            <Text style={styles.value}>{calcValues.loading ? '...' : calcValues.percentConsumption.toFixed(1)}%</Text>
-          </View>
-        </View>
+        )}
+        
 
         <View style={styles.card}>
           <Text style={styles.cardTitle}>Requested Fuel</Text>
@@ -369,6 +363,8 @@ export default function DispersionInputForm() {
             <Text style={styles.value}>{latestTicket.Fuel} L</Text>
           </View>
         </View>
+
+        
       </View>
     );
   };
@@ -453,23 +449,23 @@ export default function DispersionInputForm() {
 
       // Send WhatsApp alert if deviation is detected
       if (deviationAnalysis.deviationStatus === 'Yes') {
-        const alertSent = await sendWhatsAppAlert({
-          siteId: form["Site ID"],
-          grid: form["Grid"],
-          deviationValue: deviationAnalysis.deviationValue,
-          fuelerValue: deviationAnalysis.fuelerValue,
-          alarmValue: deviationAnalysis.alarmValue,
-          beforeFuel: parseFloat(form["Before Fuel"]),
-          lastTotalFuel: parseFloat(form["Last Total Fuel"]),
-          dgCapacity: form["DG Capacity"],
-          fuelingDate: form["Fueling Date"],
-          fuelerName: form["Fueler Name"],
-          phone: '03216889422', // RM phone number
+        const phone = '923216889422'; // Example: Pakistan number, no plus sign
+        const message = `�� DEVIATION ALERT 🚨\n\nSite ID: ${form["Site ID"]}\nGrid: ${form["Grid"]}\nFueler Name: ${form["Fueler Name"]}\nFueling Date: ${form["Fueling Date"]}\n\n📊 DEVIATION ANALYSIS:\n• Fueler Consumption: ${deviationAnalysis.fuelerValue.toFixed(2)} L\n• Alarm-based Consumption: ${deviationAnalysis.alarmValue.toFixed(2)} L\n• Deviation Value: ${deviationAnalysis.deviationValue.toFixed(2)}%\n• DG Capacity: ${form["DG Capacity"]} KVA\n\n⚠️ A deviation has been detected that requires your attention.\n\nPlease review the fueling data and take necessary action.`;
+        // Commented out backend API call for now
+        // try {
+        //   await fetch('https://backend-api-production-e8c4.up.railway.app/send-whatsapp', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify({ phone, message })
+        //   });
+        // } catch (err) {
+        //   console.error('Failed to send WhatsApp alert:', err);
+        // }
+        // Use WhatsApp deeplink for manual sending
+        const waUrl = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
+        Linking.openURL(waUrl).catch(() => {
+          alert('Make sure WhatsApp is installed on your device');
         });
-
-        if (!alertSent) {
-          console.warn('Failed to send WhatsApp alert');
-        }
       }
 
       // Prepare data with correct types for bigint columns
@@ -683,25 +679,22 @@ export default function DispersionInputForm() {
   };
 
   const handleCloseDeviation = async () => {
-    // Compose detailed deviation analysis SMS message
-    const smsMessage = deviationAnalysis && form["Site ID"]
-      ? `Alert:\nDeviation Analysis\nSite ID: ${form["Site ID"]}\nFueling Date: ${form["Fueling Date"]}\nDeviation: ${deviationAnalysis.deviationValue.toFixed(2)}%\nFueler Value: ${deviationAnalysis.fuelerValue.toFixed(2)} L\nAlarm Value: ${deviationAnalysis.alarmValue.toFixed(2)} L`
-      : 'Deviation analysis closed.';
-    sendSmsData('03324758377', smsMessage);
-
-    // Compose and send email with deviation analysis details
+    // Compose WhatsApp message and send via backend API
     if (deviationAnalysis && form["Site ID"]) {
-      const emailBody = `Alert:\nDeviation Analysis\nSite ID: ${form["Site ID"]}\nFueling Date: ${form["Fueling Date"]}\nDeviation: ${deviationAnalysis.deviationValue.toFixed(2)}%\nFueler Value: ${deviationAnalysis.fuelerValue.toFixed(2)} L\nAlarm Value: ${deviationAnalysis.alarmValue.toFixed(2)} L`;
-      await MailComposer.composeAsync({
-        recipients: ['recipient@example.com'], // Replace with actual recipient(s)
-        subject: `Deviation Analysis Alert - Site ID: ${form["Site ID"]}`,
-        body: emailBody,
-      });
-
-      // WhatsApp deep link
-      const waNumber = '923124514563';
-      const waMessage = emailBody;
-      const waUrl = `whatsapp://send?phone=${waNumber}&text=${encodeURIComponent(waMessage)}`;
+      const phone = '923216889422'; // Example: Pakistan number, no plus sign
+      const message = `🚨 DEVIATION ALERT 🚨\n\nSite ID: ${form["Site ID"]}\nGrid: ${form["Grid"]}\nFueler Name: ${form["Fueler Name"]}\nFueling Date: ${form["Fueling Date"]}\n\n📊 DEVIATION ANALYSIS:\n• Fueler Consumption: ${deviationAnalysis.fuelerValue.toFixed(2)} L\n• Alarm-based Consumption: ${deviationAnalysis.alarmValue.toFixed(2)} L\n• Deviation Value: ${deviationAnalysis.deviationValue.toFixed(2)}%\n• DG Capacity: ${form["DG Capacity"]} KVA\n\n⚠️ A deviation has been detected that requires your attention.\n\nPlease review the fueling data and take necessary action.`;
+      // Commented out backend API call for now
+      // try {
+      //   await fetch('https://backend-api-production-e8c4.up.railway.app/send-whatsapp', {
+      //     method: 'POST',
+      //     headers: { 'Content-Type': 'application/json' },
+      //     body: JSON.stringify({ phone, message })
+      //   });
+      // } catch (err) {
+      //   console.error('Failed to send WhatsApp alert:', err);
+      // }
+      // Use WhatsApp deeplink for manual sending
+      const waUrl = `whatsapp://send?phone=${phone}&text=${encodeURIComponent(message)}`;
       Linking.openURL(waUrl).catch(() => {
         alert('Make sure WhatsApp is installed on your device');
       });
@@ -711,13 +704,11 @@ export default function DispersionInputForm() {
         Alert.alert('Error', 'Deviation analysis data not available');
         return;
       }
-
       // Validate required fields
       if (!form["Site ID"] || isNaN(Number(form["Site ID"]))) {
         Alert.alert('Error', 'Site ID is required and must be a number');
         return;
       }
-
       // Store deviation in database using upsert to handle primary key conflicts
       const { error: deviationError } = await supabase
         .from('Deviation')
@@ -730,13 +721,11 @@ export default function DispersionInputForm() {
         }, {
           onConflict: '"Site ID"'
         });
-
       if (deviationError) {
         console.error('Error saving deviation:', deviationError);
         Alert.alert('Error', 'Failed to save deviation analysis');
         return;
       }
-
       // Navigate to dispersion form after successful save
       router.push('/fueler/dispersion-form');
     } catch (error) {
@@ -758,6 +747,29 @@ export default function DispersionInputForm() {
     };
     fetchPendingSiteIds();
   }, []);
+
+  // Fetch latest Fuel Request for the selected site
+  useEffect(() => {
+    const fetchLatestFuelRequest = async () => {
+      if (!form["Site ID"]) {
+        setLatestFuelRequest(null);
+        return;
+      }
+      const { data, error } = await supabase
+        .from('Fuel Request')
+        .select('*')
+        .eq('Site ID', form["Site ID"])
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .single();
+      if (!error && data) {
+        setLatestFuelRequest(data);
+      } else {
+        setLatestFuelRequest(null);
+      }
+    };
+    fetchLatestFuelRequest();
+  }, [form["Site ID"]]);
 
   if (loading || loadingOptions) {
     return (

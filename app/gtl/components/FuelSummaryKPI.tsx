@@ -66,64 +66,31 @@ export default function GTLFuelSummaryKPI() {
       const c6SiteIds = c6Sites?.map(site => site['Site ID']).filter(id => irfanSiteIds.includes(id)) || [];
 
       // Get date ranges
-      const today = new Date();
+      const now = new Date();
+      // Previous month
+      const lastMonthFirstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const lastMonthLastDay = new Date(now.getFullYear(), now.getMonth(), 0);
+      // Month before last
+      const prevMonthFirstDay = new Date(now.getFullYear(), now.getMonth() - 2, 1);
+      const prevMonthLastDay = new Date(now.getFullYear(), now.getMonth() - 1, 0);
       const formatDate = (date: Date) => {
         const day = String(date.getDate()).padStart(2, '0');
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-        const month = months[date.getMonth() as number];
+        const month = months[date.getMonth()];
         const year = String(date.getFullYear()).slice(-2);
         return `${day}-${month}-${year}`;
       };
-      const todayStr = formatDate(today);
-      const currentMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-      const currentMonthStr = formatDate(currentMonth);
-      const lastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
-      const lastMonthStr = formatDate(lastMonth);
-
-      // Fetch current month's fueling data
-      const { data: currentData, error: currentError } = await supabase
-        .from('fueling_history')
-        .select('*')
-        .gte('Date', currentMonthStr)
-        .lte('Date', todayStr);
-
-      if (currentError) {
-        console.error('Current month data error:', currentError);
-        throw currentError;
-      }
-
-      // Filter currentData for Mohammad Irfan's sites
-      const filteredCurrentData = currentData?.filter(record => irfanSiteIds.includes(record['Site ID Name'])) || [];
-
-      // Calculate C1 and C6 fuel dispersed
-      const c1FuelDispersed = filteredCurrentData
-        ?.filter(record => c1SiteIds.includes(record['Site ID Name']))
-        ?.reduce((sum, record) => sum + (Number(record['Fuel Quantity Filled']) || 0), 0) || 0;
-
-      const c6FuelDispersed = filteredCurrentData
-        ?.filter(record => c6SiteIds.includes(record['Site ID Name']))
-        ?.reduce((sum, record) => sum + (Number(record['Fuel Quantity Filled']) || 0), 0) || 0;
-
-      // Rest of the calculations...
-      const currentFuel = filteredCurrentData?.reduce((sum, record) => {
-        const fuel = Number(record['Fuel Quantity Filled']) || 0;
-        return sum + fuel;
-      }, 0) || 0;
-
-      const currentSites = new Set(filteredCurrentData?.map(record => record['Site ID Name'])).size;
-
-      const currentHours = filteredCurrentData?.reduce((sum, record) => {
-        const before = Number(record['DG Hour Meter Reading (Before)']) || 0;
-        const after = Number(record['DG Hour Meter Reading']) || 0;
-        return sum + (after - before);
-      }, 0) || 0;
+      const lastMonthFirstStr = formatDate(lastMonthFirstDay);
+      const lastMonthLastStr = formatDate(lastMonthLastDay);
+      const prevMonthFirstStr = formatDate(prevMonthFirstDay);
+      const prevMonthLastStr = formatDate(prevMonthLastDay);
 
       // Fetch last month's fueling data
       const { data: lastMonthData, error: lastMonthError } = await supabase
         .from('fueling_history')
         .select('*')
-        .gte('Date', lastMonthStr)
-        .lt('Date', currentMonthStr);
+        .gte('Date', lastMonthFirstStr)
+        .lte('Date', lastMonthLastStr);
 
       if (lastMonthError) {
         console.error('Last month data error:', lastMonthError);
@@ -133,7 +100,16 @@ export default function GTLFuelSummaryKPI() {
       // Filter lastMonthData for Mohammad Irfan's sites
       const filteredLastMonthData = lastMonthData?.filter(record => irfanSiteIds.includes(record['Site ID Name'])) || [];
 
-      // Calculate last month stats
+      // Calculate C1 and C6 fuel dispersed for last month
+      const c1FuelDispersed = filteredLastMonthData
+        ?.filter(record => c1SiteIds.includes(record['Site ID Name']))
+        ?.reduce((sum, record) => sum + (Number(record['Fuel Quantity Filled']) || 0), 0) || 0;
+
+      const c6FuelDispersed = filteredLastMonthData
+        ?.filter(record => c6SiteIds.includes(record['Site ID Name']))
+        ?.reduce((sum, record) => sum + (Number(record['Fuel Quantity Filled']) || 0), 0) || 0;
+
+      // Rest of the calculations for last month
       const lastMonthFuel = filteredLastMonthData?.reduce((sum, record) => {
         const fuel = Number(record['Fuel Quantity Filled']) || 0;
         return sum + fuel;
@@ -142,6 +118,35 @@ export default function GTLFuelSummaryKPI() {
       const lastMonthSites = new Set(filteredLastMonthData?.map(record => record['Site ID Name'])).size;
 
       const lastMonthHours = filteredLastMonthData?.reduce((sum, record) => {
+        const before = Number(record['DG Hour Meter Reading (Before)']) || 0;
+        const after = Number(record['DG Hour Meter Reading']) || 0;
+        return sum + (after - before);
+      }, 0) || 0;
+
+      // Fetch previous month's fueling data (for percentage change)
+      const { data: prevMonthData, error: prevMonthError } = await supabase
+        .from('fueling_history')
+        .select('*')
+        .gte('Date', prevMonthFirstStr)
+        .lte('Date', prevMonthLastStr);
+
+      if (prevMonthError) {
+        console.error('Previous month data error:', prevMonthError);
+        throw prevMonthError;
+      }
+
+      // Filter prevMonthData for Mohammad Irfan's sites
+      const filteredPrevMonthData = prevMonthData?.filter(record => irfanSiteIds.includes(record['Site ID Name'])) || [];
+
+      // Calculate previous month stats
+      const prevMonthFuel = filteredPrevMonthData?.reduce((sum, record) => {
+        const fuel = Number(record['Fuel Quantity Filled']) || 0;
+        return sum + fuel;
+      }, 0) || 0;
+
+      const prevMonthSites = new Set(filteredPrevMonthData?.map(record => record['Site ID Name'])).size;
+
+      const prevMonthHours = filteredPrevMonthData?.reduce((sum, record) => {
         const before = Number(record['DG Hour Meter Reading (Before)']) || 0;
         const after = Number(record['DG Hour Meter Reading']) || 0;
         return sum + (after - before);
@@ -158,18 +163,18 @@ export default function GTLFuelSummaryKPI() {
         throw dgError;
       }
 
-      // Calculate percentage changes
-      const fuelChange = lastMonthFuel ? ((currentFuel - lastMonthFuel) / lastMonthFuel) * 100 : 0;
-      const sitesChange = lastMonthSites ? ((currentSites - lastMonthSites) / lastMonthSites) * 100 : 0;
-      const hoursChange = lastMonthHours ? ((currentHours - lastMonthHours) / lastMonthHours) * 100 : 0;
+      // Calculate percentage changes (last month vs previous month)
+      const fuelChange = prevMonthFuel ? ((lastMonthFuel - prevMonthFuel) / prevMonthFuel) * 100 : 0;
+      const sitesChange = prevMonthSites ? ((lastMonthSites - prevMonthSites) / prevMonthSites) * 100 : 0;
+      const hoursChange = prevMonthHours ? ((lastMonthHours - prevMonthHours) / prevMonthHours) * 100 : 0;
 
       setStats({
-        totalFuelConsumed: currentFuel,
-        totalSitesFueled: currentSites,
-        avgFuelPerSite: currentSites > 0 ? Math.round(currentFuel / currentSites) : 0,
+        totalFuelConsumed: lastMonthFuel,
+        totalSitesFueled: lastMonthSites,
+        avgFuelPerSite: lastMonthSites > 0 ? Math.round(lastMonthFuel / lastMonthSites) : 0,
         activeDGs: dgData?.length || 0,
-        totalDGRunningHours: Math.round(currentHours),
-        avgFuelEfficiency: currentHours > 0 ? Math.round((currentFuel / currentHours) * 100) / 100 : 0,
+        totalDGRunningHours: Math.round(lastMonthHours),
+        avgFuelEfficiency: lastMonthHours > 0 ? Math.round((lastMonthFuel / lastMonthHours) * 100) / 100 : 0,
         fuelChangePercentage: Math.round(fuelChange * 10) / 10,
         sitesChangePercentage: Math.round(sitesChange * 10) / 10,
         dgHoursChangePercentage: Math.round(hoursChange * 10) / 10,

@@ -14,7 +14,7 @@ export default function GTLTabsLayout() {
         name="index"
         options={{
           title: 'Dashboard',
-          href: null, // This prevents the tab from being accessible via URL
+          // href: null, // Allow dashboard to be accessible via URL
         }}
       />
       <Tabs.Screen

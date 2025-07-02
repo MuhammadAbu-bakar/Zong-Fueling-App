@@ -44,6 +44,7 @@ export default function ToDoTicketScreen() {
   const [selectedTickets, setSelectedTickets] = useState<Set<number>>(new Set());
   const [selectedTicket, setSelectedTicket] = useState<FuelRequest | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [approvedFuelQuantity, setApprovedFuelQuantity] = useState('');
 
   if (!user || (user.role !== 'rm' && user.role !== 'admin')) {
     router.replace('/auth/login');
@@ -76,12 +77,16 @@ export default function ToDoTicketScreen() {
     }
   };
 
-  const handleTicketAction = async (action: 'Approved' | 'Rejected', ticketId?: number) => {
+  const handleTicketAction = async (action: 'Approved' | 'Rejected', ticketId?: number, approvedFuel?: string) => {
     try {
       setLoading(true);
+      const updateObj: any = { "Ticket Status": action };
+      if (action === 'Approved' && approvedFuel) {
+        updateObj["Approved Fuel Quantity"] = Number(approvedFuel);
+      }
       const { error } = await supabase
         .from('Fuel Request')
-        .update({ "Ticket Status": action })
+        .update(updateObj)
         .in('Fuel', ticketId ? [ticketId] : Array.from(selectedTickets));
 
       if (error) throw error;
@@ -103,6 +108,7 @@ export default function ToDoTicketScreen() {
       Alert.alert('Error', 'Failed to update tickets');
     } finally {
       setLoading(false);
+      setApprovedFuelQuantity('');
     }
   };
 
@@ -209,12 +215,23 @@ export default function ToDoTicketScreen() {
                     <Text style={styles.detailValue}>{selectedTicket["% Consumption"]?.toFixed(1)}%</Text>
                   </View>
                 </View>
+
+                <View style={styles.detailRow}>
+                  <Text style={styles.detailLabel}>Approved Fuel Quantity (L):</Text>
+                  <TextInput
+                    style={styles.input}
+                    value={approvedFuelQuantity}
+                    onChangeText={setApprovedFuelQuantity}
+                    placeholder="Enter approved quantity"
+                    keyboardType="numeric"
+                  />
+                </View>
               </ScrollView>
 
               <View style={styles.modalActions}>
                 <TouchableOpacity
                   style={[styles.modalButton, styles.approveButton]}
-                  onPress={() => handleTicketAction('Approved', selectedTicket.Fuel)}
+                  onPress={() => handleTicketAction('Approved', selectedTicket.Fuel, approvedFuelQuantity)}
                 >
                   <Text style={styles.modalButtonText}>Approve</Text>
                 </TouchableOpacity>
@@ -597,5 +614,14 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: '600',
+  },
+  input: {
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    backgroundColor: '#fff',
   },
 }); 

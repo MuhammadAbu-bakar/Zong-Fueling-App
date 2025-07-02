@@ -8,13 +8,12 @@ const gtlMenuItems = [
   { label: 'Dashboard', route: '(tabs)' },
   { label: 'To Do Tickets', route: '(tabs)/todo' },
   { label: 'Done Tickets', route: '(tabs)/done' },
-  { label: 'Maps', route: 'maps' },
 ];
 
 export default function GTLLayout() {
   const { user } = useAuth();
 
-  if (!user || user.role !== 'gtl') {
+  if (!user || (user.role !== 'gtl' && user.role !== 'admin')) {
     return null;
   }
 
@@ -63,18 +62,6 @@ export default function GTLLayout() {
           headerTitle: () => (
             <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
               Done Tickets
-            </Text>
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="maps"
-        options={{
-          title: 'Maps',
-          drawerLabel: 'Maps',
-          headerTitle: () => (
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
-              Maps
             </Text>
           ),
         }}

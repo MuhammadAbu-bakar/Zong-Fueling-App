@@ -59,7 +59,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         .single();
 
       if (error) {
-        console.error('Error fetching user profile:', error);
+        
         // If table doesn't exist, set a mock user for development
         if (error.code === '42P01') {
           // Determine role based on email in development

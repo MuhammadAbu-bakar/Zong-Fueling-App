@@ -28,12 +28,14 @@ export default function GTLGridwiseSummary() {
         .from('Location')
         .select('NAME')
         .eq('CMPAK GTL', 'Mohammad Irfan');
+      console.log('Fetched irfanSites:', irfanSites);
       const irfanSiteIds = irfanSites?.map(site => site.NAME?.toString()) || [];
 
       // Get all site IDs and their grids
       const { data: siteData, error: siteError } = await supabase
         .from('site_id2')
         .select('*');
+      console.log('Fetched siteData:', siteData);
 
       if (siteError) {
         console.error('Site data error:', siteError);
@@ -43,9 +45,12 @@ export default function GTLGridwiseSummary() {
       // Filter siteData to only include Mohammad Irfan's sites
       const filteredSiteData = siteData?.filter(site => irfanSiteIds.includes(site['Site ID'])) || [];
 
-      // Get current month's date range
-      const today = new Date();
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+      // Get previous month's date range
+      const now = new Date();
+      // Set to the first day of the previous month
+      const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      // Set to the last day of the previous month
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
       // Format dates to match DD-MMM-YY format
       const formatDate = (date: Date) => {
         const day = String(date.getDate()).padStart(2, '0');
@@ -54,15 +59,15 @@ export default function GTLGridwiseSummary() {
         const year = String(date.getFullYear()).slice(-2);
         return `${day}-${month}-${year}`;
       };
-      const todayStr = formatDate(today);
       const firstDayStr = formatDate(firstDay);
+      const lastDayStr = formatDate(lastDay);
 
       // Get fueling history
       const { data: fuelData, error: fuelError } = await supabase
         .from('fueling_history')
         .select('*')
         .gte('Date', firstDayStr)
-        .lte('Date', todayStr);
+        .lte('Date', lastDayStr);
 
       if (fuelError) {
         console.error('Fuel data error:', fuelError);
@@ -77,8 +82,9 @@ export default function GTLGridwiseSummary() {
         .from('DG Running Alarm')
         .select('*')
         .gte('Date', firstDayStr)
-        .lte('Date', todayStr)
-        .in('Site name', irfanSiteIds.map(Number));
+        .lte('Date', lastDayStr)
+        .in('Site name', irfanSiteIds);
+      console.log('Fetched dgData:', dgData);
 
       if (dgError) {
         console.error('DG Running Alarm data error:', dgError);

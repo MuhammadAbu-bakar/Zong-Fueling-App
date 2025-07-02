@@ -37,6 +37,13 @@ export default function SecurityDashboard() {
   const [tickets, setTickets] = useState<any[]>([]);
   const [measures, setMeasures] = useState<{ [siteId: string]: string }>({});
   const [submitting, setSubmitting] = useState<{ [siteId: string]: boolean }>({});
+  const [supervisorVisited, setSupervisorVisited] = useState<{ [siteId: string]: string }>({});
+  const [deviationReason, setDeviationReason] = useState<{ [siteId: string]: string }>({});
+  const [theftType, setTheftType] = useState<{ [siteId: string]: string }>({});
+  const [recoveredFuel, setRecoveredFuel] = useState<{ [siteId: string]: string }>({});
+  const [actionTaken, setActionTaken] = useState<{ [siteId: string]: string }>({});
+  const [status, setStatus] = useState<{ [siteId: string]: string }>({});
+  const [remarks, setRemarks] = useState<{ [siteId: string]: string }>({});
 
   if (!user || (user.role !== 'security' && user.role !== 'admin')) {
     router.replace('/auth/login');
@@ -73,6 +80,34 @@ export default function SecurityDashboard() {
     setMeasures((prev) => ({ ...prev, [siteId]: value }));
   };
 
+  const handleSupervisorVisitedChange = (siteId: string, value: string) => {
+    setSupervisorVisited((prev) => ({ ...prev, [siteId]: value }));
+  };
+
+  const handleDeviationReasonChange = (siteId: string, value: string) => {
+    setDeviationReason((prev) => ({ ...prev, [siteId]: value }));
+  };
+
+  const handleTheftTypeChange = (siteId: string, value: string) => {
+    setTheftType((prev) => ({ ...prev, [siteId]: value }));
+  };
+
+  const handleRecoveredFuelChange = (siteId: string, value: string) => {
+    setRecoveredFuel((prev) => ({ ...prev, [siteId]: value }));
+  };
+
+  const handleActionTakenChange = (siteId: string, value: string) => {
+    setActionTaken((prev) => ({ ...prev, [siteId]: value }));
+  };
+
+  const handleStatusChange = (siteId: string, value: string) => {
+    setStatus((prev) => ({ ...prev, [siteId]: value }));
+  };
+
+  const handleRemarksChange = (siteId: string, value: string) => {
+    setRemarks((prev) => ({ ...prev, [siteId]: value }));
+  };
+
   const handleSubmitMeasure = async (ticket: any) => {
     setSubmitting((prev) => ({ ...prev, [ticket["Site ID"]]: true }));
     try {
@@ -82,15 +117,27 @@ export default function SecurityDashboard() {
         "Fueler Fuel Consumption": ticket["Fueler Fuel Consumption"],
         "Alarm based Consumption": ticket["Alarm based Consumption"],
         "Deviation Value": ticket["Deviation Value"],
-        "Measures": measures[ticket["Site ID"]] || '',
+        "Supervisor Visited": supervisorVisited[ticket["Site ID"]] || '',
+        "Deviation Reason": deviationReason[ticket["Site ID"]] || '',
+        "Action Taken": actionTaken[ticket["Site ID"]] || '',
+        "Status": status[ticket["Site ID"]] || '',
+        "Remarks": remarks[ticket["Site ID"]] || '',
+        "Theft Type": theftType[ticket["Site ID"]] || '',
+        "Recovered Fuel Quantity": recoveredFuel[ticket["Site ID"]] || '',
         "Ticket Status": ticket["Ticket Status"],
       });
       if (error) throw error;
-      Alert.alert('Success', 'Security measure submitted successfully.');
-      setMeasures((prev) => ({ ...prev, [ticket["Site ID"]]: '' }));
+      Alert.alert('Success', 'Deviation details submitted successfully.');
+      setSupervisorVisited((prev) => ({ ...prev, [ticket["Site ID"]]: '' }));
+      setDeviationReason((prev) => ({ ...prev, [ticket["Site ID"]]: '' }));
+      setActionTaken((prev) => ({ ...prev, [ticket["Site ID"]]: '' }));
+      setStatus((prev) => ({ ...prev, [ticket["Site ID"]]: '' }));
+      setRemarks((prev) => ({ ...prev, [ticket["Site ID"]]: '' }));
+      setTheftType((prev) => ({ ...prev, [ticket["Site ID"]]: '' }));
+      setRecoveredFuel((prev) => ({ ...prev, [ticket["Site ID"]]: '' }));
       setTickets((prev) => prev.filter(t => t["Site ID"] !== ticket["Site ID"]));
     } catch (err) {
-      Alert.alert('Error', 'Failed to submit security measure.');
+      Alert.alert('Error', 'Failed to submit deviation details.');
     } finally {
       setSubmitting((prev) => ({ ...prev, [ticket["Site ID"]]: false }));
     }
@@ -130,19 +177,99 @@ export default function SecurityDashboard() {
             <Text>Deviation Value: {ticket["Deviation Value"]}%</Text>
           </View>
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Security Measure</Text>
+            <Text style={styles.sectionTitle}>Deviation Details</Text>
+            <Text>Supervisor Visited Site</Text>
+            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+              <Button
+                title="Yes"
+                color={supervisorVisited[ticket["Site ID"]] === 'Yes' ? '#8DC63F' : '#ccc'}
+                onPress={() => handleSupervisorVisitedChange(ticket["Site ID"], 'Yes')}
+              />
+              <View style={{ width: 8 }} />
+              <Button
+                title="No"
+                color={supervisorVisited[ticket["Site ID"]] === 'No' ? '#8DC63F' : '#ccc'}
+                onPress={() => handleSupervisorVisitedChange(ticket["Site ID"], 'No')}
+              />
+            </View>
+            
+            <Text>Theft Type</Text>
+            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+              <Button
+                title="Fuel Loss"
+                color={theftType[ticket["Site ID"]] === 'Fuel Loss' ? '#8DC63F' : '#ccc'}
+                onPress={() => handleTheftTypeChange(ticket["Site ID"], 'Fuel Loss')}
+              />
+              <View style={{ width: 8 }} />
+              <Button
+                title="Fuel Theft"
+                color={theftType[ticket["Site ID"]] === 'Fuel Theft' ? '#8DC63F' : '#ccc'}
+                onPress={() => handleTheftTypeChange(ticket["Site ID"], 'Fuel Theft')}
+              />
+            </View>
+            <Text>Recovered Fuel Quantity</Text>
+            <View style={{ flexDirection: 'row', marginBottom: 8 }}>
+              <Button
+                title="Yes"
+                color={recoveredFuel[ticket["Site ID"]] === 'Yes' ? '#8DC63F' : '#ccc'}
+                onPress={() => handleRecoveredFuelChange(ticket["Site ID"], 'Yes')}
+              />
+              <View style={{ width: 8 }} />
+              <Button
+                title="No"
+                color={recoveredFuel[ticket["Site ID"]] === 'No' ? '#8DC63F' : '#ccc'}
+                onPress={() => handleRecoveredFuelChange(ticket["Site ID"], 'No')}
+              />
+            </View>
+
+            <Text>Deviation Reason</Text>
             <TextInput
               style={styles.input}
-              placeholder="Enter security measure..."
-              value={measures[ticket["Site ID"]] ?? ticket["Measures"] ?? ''}
-              onChangeText={(text) => handleMeasureChange(ticket["Site ID"], text)}
+              placeholder="Enter deviation reason..."
+              value={deviationReason[ticket["Site ID"]] || ''}
+              onChangeText={(text) => handleDeviationReasonChange(ticket["Site ID"], text)}
               editable={!submitting[ticket["Site ID"]]}
               multiline
             />
+            <Text>Action Taken</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter action taken..."
+              value={actionTaken[ticket["Site ID"]] || ''}
+              onChangeText={(text) => handleActionTakenChange(ticket["Site ID"], text)}
+              editable={!submitting[ticket["Site ID"]]}
+              multiline
+            />
+            <Text>Status</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter status..."
+              value={status[ticket["Site ID"]] || ''}
+              onChangeText={(text) => handleStatusChange(ticket["Site ID"], text)}
+              editable={!submitting[ticket["Site ID"]]}
+              multiline
+            />
+            <Text>Remarks</Text>
+            <TextInput
+              style={styles.input}
+              placeholder="Enter remarks..."
+              value={remarks[ticket["Site ID"]] || ''}
+              onChangeText={(text) => handleRemarksChange(ticket["Site ID"], text)}
+              editable={!submitting[ticket["Site ID"]]}
+              multiline
+            />
+            
             <Button
               title={submitting[ticket["Site ID"]] ? 'Submitting...' : 'Submit'}
               onPress={() => handleSubmitMeasure(ticket)}
-              disabled={submitting[ticket["Site ID"]] || !(measures[ticket["Site ID"]]?.trim())}
+              disabled={submitting[ticket["Site ID"]] ||
+                !supervisorVisited[ticket["Site ID"]] ||
+                !deviationReason[ticket["Site ID"]] ||
+                !actionTaken[ticket["Site ID"]] ||
+                !status[ticket["Site ID"]] ||
+                !remarks[ticket["Site ID"]] ||
+                !theftType[ticket["Site ID"]] ||
+                !recoveredFuel[ticket["Site ID"]]}
               color="#8DC63F"
             />
           </View>

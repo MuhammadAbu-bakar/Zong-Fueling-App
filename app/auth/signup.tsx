@@ -21,6 +21,7 @@ export default function SignupScreen() {
   const [loading, setLoading] = useState(false);
   const { signUp } = useAuth();
 
+  /*
   const handleSignup = async () => {
     if (!email || !password || !confirmPassword) {
       Alert.alert('Error', 'Please fill in all fields');
@@ -48,6 +49,7 @@ export default function SignupScreen() {
       setLoading(false);
     }
   };
+  */
 
   return (
     <KeyboardAvoidingView 
@@ -133,7 +135,7 @@ export default function SignupScreen() {
 
           <Pressable 
             style={[styles.button, loading && styles.buttonDisabled]}
-            onPress={handleSignup}
+            // onPress={handleSignup}
             disabled={loading}
           >
             <Text style={styles.buttonText}>

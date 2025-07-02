@@ -40,12 +40,31 @@ export default function CustomDrawer({ menuItems }: DrawerProps) {
       
       // For admin view navigation to other roles
       if (user?.role === 'admin' && route.includes('/')) {
-        router.push(route as any);
+        // Remove leading slash if present
+        const cleanRoute = route.startsWith('/') ? route.slice(1) : route;
+        router.push(cleanRoute as any);
         return;
       }
       
       // Get the current user's role path
       const rolePath = user?.role ? `/${user.role}` : '';
+      
+      // Special case for RM dashboard
+      if (user?.role === 'rm' && route === 'rm/index') {
+        router.push('/rm/(tabs)/index' as any);
+        return;
+      }
+      
+      // Special case for RM To Do Tickets
+      if (user?.role === 'rm' && route === 'rm/todo') {
+        router.push('/rm/todo' as any);
+        return;
+      }
+
+      if (user?.role === 'rm' && route === 'rm/done') {
+        router.push('/rm/done' as any);
+        return;
+      }
       
       // For drawer navigation within the same role view
       if (route.includes('(tabs)')) {
@@ -68,6 +87,12 @@ export default function CustomDrawer({ menuItems }: DrawerProps) {
         const fullPath = `${rolePath}/${route}` as any;
         console.log('Navigating to non-tab route:', fullPath);
         router.push(fullPath);
+      }
+
+      // For admin dashboard
+      if (user?.role === 'admin' && (route === 'admin/index' || route === '/admin/index')) {
+        router.push('/admin/index' as any);
+        return;
       }
     } catch (error) {
       console.error('Navigation error:', error);

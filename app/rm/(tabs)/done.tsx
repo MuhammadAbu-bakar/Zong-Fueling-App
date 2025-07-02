@@ -27,6 +27,7 @@ interface FuelRequest {
   "Fuel Consumption": number | null;
   "% Consumption": number | null;
   "Ticket Status": string | null;
+  "Site ID": string | null;
 }
 
 export default function DoneScreen() {
@@ -70,7 +71,7 @@ export default function DoneScreen() {
 
   const filteredTickets = tickets.filter(ticket => {
     const matchesSearch = searchQuery
-      ? ticket.Grid?.toLowerCase().includes(searchQuery.toLowerCase())
+      ? ticket["Site ID"]?.toLowerCase().includes(searchQuery.toLowerCase())
       : true;
     
     const matchesTab = selectedTab === 'all' 
@@ -93,7 +94,7 @@ export default function DoneScreen() {
     <View key={ticket.Fuel} style={styles.mobileCard}>
       <View style={styles.mobileCardHeader}>
         {renderStatusBadge(ticket["Ticket Status"])}
-        <Text style={styles.mobileTitle} numberOfLines={2}>Grid: {ticket.Grid}</Text>
+        <Text style={styles.mobileTitle} numberOfLines={2}>Site ID: {ticket["Site ID"]}</Text>
       </View>
       <View style={styles.mobileCardContent}>
         <View style={styles.mobileRow}>
@@ -124,7 +125,7 @@ export default function DoneScreen() {
     <>
       <View style={styles.tableHeader}>
         <Text style={[styles.headerCell, { flex: 0.5 }]}>Status</Text>
-        <Text style={styles.headerCell}>Grid</Text>
+        <Text style={styles.headerCell}>Site ID</Text>
         <Text style={styles.headerCell}>Fuel Request</Text>
         <Text style={styles.headerCell}>Created At</Text>
         <Text style={styles.headerCell}>DG Capacity</Text>
@@ -136,7 +137,7 @@ export default function DoneScreen() {
             <View style={[styles.cell, { flex: 0.5 }]}>
               {renderStatusBadge(ticket["Ticket Status"])}
             </View>
-            <Text style={styles.cell} numberOfLines={1}>{ticket.Grid}</Text>
+            <Text style={styles.cell} numberOfLines={1}>{ticket["Site ID"]}</Text>
             <Text style={styles.cell}>{ticket.Fuel} L</Text>
             <Text style={styles.cell}>{new Date(ticket.created_at).toLocaleString()}</Text>
             <Text style={styles.cell}>{ticket["DG Capacity"]} KVA</Text>
@@ -172,7 +173,7 @@ export default function DoneScreen() {
         <View style={styles.filters}>
           <TextInput
             style={styles.searchInput}
-            placeholder="Search by Grid..."
+            placeholder="Search by Site ID..."
             value={searchQuery}
             onChangeText={setSearchQuery}
           />

@@ -44,6 +44,7 @@ export default function GTLToDoTicketScreen() {
   const [selectedTickets, setSelectedTickets] = useState<Set<number>>(new Set());
   const [selectedTicket, setSelectedTicket] = useState<FuelRequest | null>(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
+  const [approvedFuelQuantity, setApprovedFuelQuantity] = useState('');
 
   // Check if user is GTL or admin
   if (!user || (user.role !== 'gtl' && user.role !== 'admin')) {
@@ -77,12 +78,16 @@ export default function GTLToDoTicketScreen() {
     }
   };
 
-  const handleTicketAction = async (action: 'Approved' | 'Rejected', ticketId?: number) => {
+  const handleTicketAction = async (action: 'Approved' | 'Rejected', ticketId?: number, approvedFuel?: string) => {
     try {
       setLoading(true);
+      const updateObj: any = { "Ticket Status": action };
+      if (action === 'Approved' && approvedFuel) {
+        updateObj["Approved Fuel Quantity"] = Number(approvedFuel);
+      }
       const { error } = await supabase
         .from('Fuel Request')
-        .update({ "Ticket Status": action })
+        .update(updateObj)
         .in('Fuel', ticketId ? [ticketId] : Array.from(selectedTickets));
 
       if (error) throw error;
@@ -104,6 +109,7 @@ export default function GTLToDoTicketScreen() {
       Alert.alert('Error', 'Failed to update tickets');
     } finally {
       setLoading(false);
+      setApprovedFuelQuantity('');
     }
   };
 
@@ -212,11 +218,25 @@ export default function GTLToDoTicketScreen() {
                 </View>
 
                 <View style={styles.detailSection}>
+                  <Text style={styles.sectionTitle}>Approved Fuel Quantity</Text>
+                  <View style={styles.detailRow}>
+                    <Text style={styles.detailLabel}>Approved Fuel Quantity (L):</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={approvedFuelQuantity}
+                      onChangeText={setApprovedFuelQuantity}
+                      placeholder="Enter approved quantity"
+                      keyboardType="numeric"
+                    />
+                  </View>
+                </View>
+
+                <View style={styles.detailSection}>
                   <Text style={styles.sectionTitle}>Actions</Text>
                   <View style={styles.actionButtons}>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.approveButton]}
-                      onPress={() => handleTicketAction('Approved', selectedTicket.Fuel)}
+                      onPress={() => handleTicketAction('Approved', selectedTicket.Fuel, approvedFuelQuantity)}
                     >
                       <Text style={styles.actionButtonText}>Approve</Text>
                     </TouchableOpacity>
@@ -639,5 +659,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     gap: 12,
+  },
+  input: {
+    height: 40,
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    backgroundColor: '#fff',
   },
 }); 

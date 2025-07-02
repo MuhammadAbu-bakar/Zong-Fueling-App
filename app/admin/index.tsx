@@ -38,7 +38,7 @@ interface UserView {
 const userViews: UserView[] = [
   {
     title: 'Regional Manager',
-    route: '/rm/todo',
+    route: '/rm',
     color: '#2196F3',
     description: '',
     role: 'rm',
@@ -113,7 +113,8 @@ export default function AdminDashboard() {
       key={view.title}
       style={[styles.card, { backgroundColor: view.color }]}
       onPress={() => {
-        const route = view.route.startsWith('/') ? view.route.slice(1) : view.route;
+        // Always use absolute path for navigation
+        const route = view.route.startsWith('/') ? view.route : `/${view.route}`;
         router.push(route as any);
       }}
     >

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ActivityIndicator, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ActivityIndicator, ScrollView as RNScrollView } from 'react-native';
 import { supabase } from '../../../lib/supabase';
 
 interface GridSummary {
@@ -38,10 +38,12 @@ export default function GridwiseSummary() {
 
       console.log('Site data count:', siteData?.length);
 
-      // Get current month's date range
-      const today = new Date();
-      const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-      
+      // Get previous month's date range
+      const now = new Date();
+      // Set to the first day of the previous month
+      const firstDay = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      // Set to the last day of the previous month
+      const lastDay = new Date(now.getFullYear(), now.getMonth(), 0);
       // Format dates to match DD-MMM-YY format
       const formatDate = (date: Date) => {
         const day = String(date.getDate()).padStart(2, '0');
@@ -51,20 +53,16 @@ export default function GridwiseSummary() {
         return `${day}-${month}-${year}`;
       };
 
-      const todayStr = formatDate(today);
       const firstDayStr = formatDate(firstDay);
-
-      console.log('Using date range:', {
-        firstDay: firstDayStr,
-        today: todayStr
-      });
+      const lastDayStr = formatDate(lastDay);
+      console.log('Using date range for last month:', { firstDay: firstDayStr, lastDay: lastDayStr });
 
       // Get fueling history
       const { data: fuelData, error: fuelError } = await supabase
         .from('fueling_history')
         .select('*')
         .gte('Date', firstDayStr)
-        .lte('Date', todayStr);
+        .lte('Date', lastDayStr);
 
       if (fuelError) {
         console.error('Fuel data error:', fuelError);
@@ -76,7 +74,7 @@ export default function GridwiseSummary() {
         .from('DG Running Alarm')
         .select('*')
         .gte('Date', firstDayStr)
-        .lte('Date', todayStr);
+        .lte('Date', lastDayStr);
 
       if (dgError) {
         console.error('DG Running Alarm data error:', dgError);
@@ -221,53 +219,44 @@ export default function GridwiseSummary() {
           <Text style={styles.noDataText}>No data available for the current month</Text>
         </View>
       ) : (
-        <>
-          <View style={styles.headerRow}>
-            <Text style={[styles.headerCell, styles.gridCell]}>Grid</Text>
-            <Text style={[styles.headerCell, styles.numberCell]}>Sites</Text>
-            <Text style={[styles.headerCell, styles.numberCell]}>Total Fuel (L)</Text>
-            <Text style={[styles.headerCell, styles.numberCell]}>Avg/Site</Text>
-            <Text style={[styles.headerCell, styles.numberCell]}>%</Text>
-            <Text style={[styles.headerCell, styles.numberCell]}>LS</Text>
-          </View>
-
-          <View style={styles.tableContainer}>
-            {gridData.map((grid, index) => (
-              <View 
-                key={grid.grid} 
-                style={[
-                  styles.row,
-                  index % 2 === 0 ? styles.evenRow : styles.oddRow
-                ]}
-              >
-                <Text style={[styles.cell, styles.gridCell]} numberOfLines={1} ellipsizeMode="tail">
-                  {grid.grid}
-                </Text>
-                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
-                  {grid.totalSites}
-                </Text>
-                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
-                  {grid.totalFuel.toLocaleString()}
-                </Text>
-                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
-                  {grid.avgFuelPerSite.toLocaleString()}
-                </Text>
-                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
-                  {grid.fuelPercentage.toFixed(1)}%
-                </Text>
-                <Text style={[styles.cell, styles.numberCell]} numberOfLines={1}>
-                  {grid.hasDGRecords ? grid.lsAvg.toFixed(1) : '-'}
-                </Text>
-                <View 
+        <RNScrollView horizontal showsHorizontalScrollIndicator={false}>
+          <View>
+            <View style={styles.headerRow}>
+              <Text style={[styles.headerCell, styles.gridCell]}>Grid</Text>
+              <Text style={[styles.headerCell, styles.sitesCell]}>Sites</Text>
+              <Text style={[styles.headerCell, styles.fuelCell]}>Total Fuel (L)</Text>
+              <Text style={[styles.headerCell, styles.avgCell]}>Avg/Site</Text>
+              <Text style={[styles.headerCell, styles.percentCell]}>%</Text>
+            </View>
+            <View style={styles.tableContainer}>
+              {gridData.map((grid, index) => (
+                <View
+                  key={grid.grid}
                   style={[
-                    styles.progressBar, 
-                    { width: `${Math.min(grid.fuelPercentage, 100)}%` }
-                  ]} 
-                />
-              </View>
-            ))}
+                    styles.row,
+                    index % 2 === 0 ? styles.evenRow : styles.oddRow
+                  ]}
+                >
+                  <Text style={[styles.cell, styles.gridCell]} numberOfLines={1} ellipsizeMode="tail">
+                    {grid.grid}
+                  </Text>
+                  <Text style={[styles.cell, styles.sitesCell]} numberOfLines={1}>
+                    {grid.totalSites}
+                  </Text>
+                  <Text style={[styles.cell, styles.fuelCell]} numberOfLines={1}>
+                    {grid.totalFuel.toLocaleString()}
+                  </Text>
+                  <Text style={[styles.cell, styles.avgCell]} numberOfLines={1}>
+                    {grid.avgFuelPerSite.toLocaleString()}
+                  </Text>
+                  <Text style={[styles.cell, styles.percentCell]} numberOfLines={1}>
+                    {grid.fuelPercentage.toFixed(1)}%
+                  </Text>
+                </View>
+              ))}
+            </View>
           </View>
-        </>
+        </RNScrollView>
       )}
     </View>
   );
@@ -317,25 +306,45 @@ const styles = StyleSheet.create({
   headerCell: {
     fontWeight: 'bold',
     color: '#666',
+    textAlign: 'center',
   },
   cell: {
     color: '#333',
   },
   gridCell: {
-    flex: 0.7,
-    paddingHorizontal: 4,
+    minWidth: 80,
+    maxWidth: 120,
+    flex: 0,
+    paddingHorizontal: 8,
+    textAlign: 'center',
   },
-  numberCell: {
-    flex: 1,
-    textAlign: 'right',
-    paddingHorizontal: 4,
+  sitesCell: {
+    minWidth: 60,
+    maxWidth: 80,
+    flex: 0,
+    paddingHorizontal: 8,
+    textAlign: 'center',
   },
-  progressBar: {
-    position: 'absolute',
-    height: '100%',
-    backgroundColor: 'rgba(255, 82, 82, 0.1)',
-    left: 0,
-    top: 0,
+  fuelCell: {
+    minWidth: 110,
+    maxWidth: 130,
+    flex: 0,
+    paddingHorizontal: 8,
+    textAlign: 'center',
+  },
+  avgCell: {
+    minWidth: 80,
+    maxWidth: 100,
+    flex: 0,
+    paddingHorizontal: 8,
+    textAlign: 'center',
+  },
+  percentCell: {
+    minWidth: 60,
+    maxWidth: 80,
+    flex: 0,
+    paddingHorizontal: 8,
+    textAlign: 'center',
   },
   loadingContainer: {
     padding: 20,

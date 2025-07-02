@@ -8,7 +8,6 @@ const rmMenuItems = [
   { label: 'Dashboard', route: 'rm/index' },
   { label: 'To Do Tickets', route: 'rm/todo' },
   { label: 'Done Tickets', route: 'rm/done' },
-  { label: 'Maps', route: 'rm/maps' },
 ];
 
 export default function RMLayout() {
@@ -63,18 +62,6 @@ export default function RMLayout() {
           headerTitle: () => (
             <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
               Done Tickets
-            </Text>
-          ),
-        }}
-      />
-      <Drawer.Screen
-        name="maps"
-        options={{
-          title: 'Maps',
-          drawerLabel: 'Maps',
-          headerTitle: () => (
-            <Text style={{ color: '#fff', fontSize: 18, fontWeight: 'bold' }}>
-              Maps
             </Text>
           ),
         }}
