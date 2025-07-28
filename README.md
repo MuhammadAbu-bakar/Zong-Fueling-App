@@ -51,4 +51,4 @@ Join our community of developers creating universal apps.
 - [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
 =======
 # Zong-Fueling-App
->>>>>>> 770e57ba240c7ab86b76e3c34dcadf8d1799830d
+
